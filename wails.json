@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "colorpick-vanilla",
+  "outputfilename": "colorpick-vanilla",
+  "frontend:build": "npm run build",
+  "frontend:install": "npm install",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Alex.s.Trushnikov",
+    "email": "alexandr.s.trushnikov@gmail.com"
+  }
+}
