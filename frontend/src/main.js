@@ -4,11 +4,12 @@ import './app.css';
 import logo from './assets/images/logo-universal.png';
 import {OpenFileDialog} from "../wailsjs/go/main/App";
 
+const APP_SOURCE_HTML = 'test.html'
+
 let appElement = document.querySelector('#app');
 
 window.reloadDynDocs = async function() {
-    console.log("reloading documents")
-    await fetch('test.html')
+    await fetch(APP_SOURCE_HTML)
     .then(response => {
         if (!response.ok) {
             throw new Error("html file load error");
@@ -17,18 +18,13 @@ window.reloadDynDocs = async function() {
     })
     .then(htmlContent => {
         appElement.innerHTML = htmlContent;
-        console.log("HTML content: ", htmlContent)
-        console.log("app inner HTML after reload: ", appElement.innerHTML)
-        // document.querySelector('#app').innerHTML = htmlContent;
     })
     .catch(error => {
         console.error("error fetching HTML:", error);
         appElement.innerHTML = '<p>Error</p>';
-        // document.querySelector('#app').innerHTML = '<p>Error</p>';
     });
     document.getElementById('logo').src = logo;
-    document.getElementById("name");
-    nameElement.focus();
+    document.getElementById("name").focus();
 }
 
 let init = async function initialize() {
