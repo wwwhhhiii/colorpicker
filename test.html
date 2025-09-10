@@ -1,16 +1,15 @@
 <div class="upper-container">
-    <button class="generic-btn" onclick="openFileDialog()">Select file</button>
+    <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+    <button class="generic-btn open-file-btn" onclick="openFileDialog()">Select file</button>
+    <button class="generic-btn reload-style-btn" onclick="reloadDynDocs()">Reload style</button>
+    <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
 </div>
 
 <div class="main-container">
     <div class="result" id="result">Color picker</div>
     <div class="input-box" id="input">
-
-        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
-        <button class="generic-btn" onclick="reloadDynDocs()">Reload style</button>
-        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
-
-        <input class="colorp" name="Color picker" type="color"/>
+        <input class="colorp" name="Color picker" type="color" alpha>
+        <label for="colorp">color</label>
     </div>
 </div>
 
