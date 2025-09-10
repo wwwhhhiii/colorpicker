@@ -9,23 +9,23 @@ let appElement = document.querySelector('#app');
 
 window.reloadDynDocs = async function() {
     await fetch(APP_SOURCE_HTML)
-    .then(response => {
+    .then(response => async function () {
         if (!response.ok) {
-            throw new Error("HTML file load error");
+            throw new Error(await response.text());
         }
         return response.text();
-    })
+    }())
     .then(htmlContent => async function () {
         // inject .html
         appElement.innerHTML = htmlContent;
         // inject .css
         await fetch(APP_SOURCE_CSS)
-        .then(response => {
+        .then(response => async function () {
             if (!response.ok) {
-                throw new Error("CSS file load error");
+                throw new Error(await response.text());
             }
             return response.text();
-        })
+        }())
         .then(cssContent => {
             let dynamicStyle = document.getElementById("_dynamic-style");
             if (dynamicStyle !== null) {
@@ -39,12 +39,12 @@ window.reloadDynDocs = async function() {
         })
         .catch(error => {
             console.error("error fetching CSS:", error);
-            appElement.innerHTML = '<p>Error during style files load</p>';
+            appElement.innerHTML = `<p>Load ${APP_SOURCE_CSS} <strong>(${error})</strong></p>`;
         })
     }())
     .catch(error => {
         console.error("error fetching HTML:", error);
-        appElement.innerHTML = '<p>Error during style files load</p>';
+        appElement.innerHTML = `<p>Load ${APP_SOURCE_HTML} <strong>(${error})</strong></p>`;
     });
 };
 
