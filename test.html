@@ -1,10 +1,24 @@
-<img id="logo" class="logo">
-    <div class="result" id="result">Hello world</div>
+<div class="upper-container">
+    <button class="generic-btn" onclick="openFileDialog()">Select file</button>
+</div>
+
+<div class="main-container">
+    <div class="result" id="result">Color picker</div>
     <div class="input-box" id="input">
-        <input class="input" id="name" type="text" autocomplete="off"/>
-        <!-- ///////////////////// DON'T TOUCH //////////////////// -->
-        <button class="btn" onclick="openFileDialog()">Select</button>
-        <button class="btn" onclick="reloadDynDocs()">Reload</button>
-        <!-- ///////////////////// DON'T TOUCH //////////////////// -->
+
+        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+        <button class="generic-btn" onclick="reloadDynDocs()">Reload style</button>
+        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
+
+        <input class="colorp" name="Color picker" type="color"/>
     </div>
+</div>
+
+<div class="lower-container">
+
+    <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+    <button class="generic-btn" onclick="saveFileAs()">Save as</button>
+    <button class="generic-btn" onclick="saveFile()">Save file</button>
+    <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
+
 </div>
