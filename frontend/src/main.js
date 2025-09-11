@@ -1,6 +1,6 @@
 import './style.css';
 
-import {OpenFileDialog} from "../wailsjs/go/main/App";
+import {LoadColorsFile, OpenFileDialog} from "../wailsjs/go/main/App";
 
 const APP_SOURCE_HTML = 'test.html';
 const APP_SOURCE_CSS = 'style.css';
@@ -48,13 +48,27 @@ window.reloadDynDocs = async function() {
     });
 };
 
-(async function () { await window.reloadDynDocs(); } )();
+function createColorElement(name) {
+    let colorElement = document.createElement("li");
+    colorElement.className = "color-element";
+    colorElement.textContent = name;
+    let colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorElement.appendChild(colorInput);
+    colorElement.addEventListener("dblclick", (event) => {
+        window.alert(`you clicked ${name} element`);
+    });
+    return colorElement;
+}
 
 window.openFileDialog = function () {
     try {
-        OpenFileDialog()
+        LoadColorsFile()
             .then((result) => {
-                document.getElementById("result").innerText = result;
+                let colorsMenu = document.getElementById("colors-groups-menu");
+                result.forEach(element => {
+                    colorsMenu.appendChild(createColorElement(element));
+                });
             })
             .catch((err) => {
                 console.error(err);
@@ -65,6 +79,54 @@ window.openFileDialog = function () {
     }
 };
 
+function createColorGroup() {
+    let group = document.createElement("menu");
+    group.className = "colors-group";
+    group.textContent = "Подгруппа";
+    group.elemsHidden = false;
+
+    // TODO remove test elements
+    group.appendChild(createColorElement("test_1"));
+    group.appendChild(createColorElement("test_2"));
+
+    // fold/unfold child elements with double click
+    group.addEventListener("dblclick", (event) => {
+        let groupColors = event.target.getElementsByClassName("color-element");
+        for (let color of groupColors) {
+            color.style.display = event.target.elemsHidden ? 'block' : 'none';
+        }
+        event.target.elemsHidden = !event.target.elemsHidden;
+        event.stopPropagation();
+        window.alert("clicked");
+    });
+    return group;
+}
+
+window.addColorGroup = function () {
+    let groupsContainer = document.getElementById("groups-content");
+    groupsContainer.appendChild(createColorGroup());
+}
+
 let stub = function () { window.alert("button is not ready"); };
 window.saveFileAs = stub;
 window.saveFile = stub;
+
+function initUpperContainer() {
+    
+}
+
+function initColorGroups() {
+    // let colorsMenu = document.getElementById("colors-groups-menu");
+    // let testListItem = document.createElement("li");
+    // testListItem.textContent = "click me";
+    // testListItem.addEventListener("dblclick", (event) => {stub()});
+    // colorsMenu.appendChild(testListItem);
+}
+
+(async function () { 
+    await window.reloadDynDocs();
+    initUpperContainer();
+    initColorGroups();
+} )();
+
+

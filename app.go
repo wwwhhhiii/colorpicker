@@ -35,19 +35,23 @@ func (a *App) OpenFileDialog() (string, error) {
 	return file, err
 }
 
+func parseColorFile(f string) ([]string, error) {
+	return []string{"hello from GOLANG", "test1", "test2"}, nil
+}
+
 // returns empty string and no error if no file was chosen
-func (a *App) LoadColorsFile() (string, error) {
+func (a *App) LoadColorsFile() ([]string, error) {
 	selectedFile, err := a.OpenFileDialog()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	// no file chosen
 	if selectedFile == "" {
-		return "", nil
+		return nil, nil
 	}
-	content, err := ParseColorFile(selectedFile)
+	content, err := parseColorFile(selectedFile)
 	if err != nil {
-		return "", errors.New("error parsing colors file")
+		return nil, errors.New("error parsing colors file")
 	}
 
 	return content, nil

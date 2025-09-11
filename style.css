@@ -10,6 +10,79 @@
     background-origin: content-box;
 }
 
+.app-container {
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+}
+
+.upper-container {
+    background-color: green;
+    height: 15vh;
+    width: 90%;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    margin: 0 5%;
+}
+
+.main-container {
+    background-color: rgb(3, 27, 59);
+    display: block;
+    width: 90vw;
+    height: 70vh;
+    margin: 0 5%;
+}
+
+.groups-container {
+    background-color: black;
+    float: left;
+    width: 25%;
+    height: 100%;
+}
+
+.groups-container .colors-groups-menu {
+    margin: 2% 10%;
+}
+
+.groups-container .groups-content {
+    background-color: orchid;
+    overflow-y: scroll;
+    width: 100%;
+    height: 90%;
+    bottom: 0;
+}
+
+.screenshot-and-desc-container {
+    background-color: rgb(255, 0, 0);
+    float: right;
+    height: 100%;
+    width: 75%;
+}
+
+.screenshot-container {
+    background-color: aqua;
+    height: 70%;
+    width: 100%;
+}
+
+.desc-container {
+    background-color: orangered;
+    height: 30%;
+    width: 100%;
+}
+
+.lower-container {
+    background-color: blueviolet;
+    height: 15vh;
+    width: 90vw;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    margin: 0 5%;
+}
+
 .generic-btn {
     width: auto;
     min-width: 80px;
@@ -32,28 +105,8 @@
     float: right;
 }
 
-.upper-container {
-    margin: 1% 1% 0 1%;
-    flex-direction: column;
-    position: relative;
-    top: 1%;
-}
-
-.lower-container {
-    margin: 1% 0 0 0;
-    flex-direction: column;
-    position: fixed;
-    bottom: 1%;
-    right: 1%;
-}
-
-.main-container {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
+.add-group-btn {
+    float: left;
 }
 
 .child {
@@ -64,13 +117,7 @@
     margin: 2%;
 }
 
-.result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
-}
-
-.input-box .btn:hover {
+/* .input-box .btn:hover {
     background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
     color: #333333;
 }
@@ -94,4 +141,4 @@
 .input-box .input:focus {
     border: none;
     background-color: rgba(255, 255, 255, 1);
-}
+} */

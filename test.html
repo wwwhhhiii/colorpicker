@@ -1,23 +1,30 @@
-<div class="upper-container">
-    <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
-    <button class="generic-btn open-file-btn" onclick="openFileDialog()">Select file</button>
-    <button class="generic-btn reload-style-btn" onclick="reloadDynDocs()">Reload style</button>
-    <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
-</div>
-
-<div class="main-container">
-    <div class="result" id="result">Color picker</div>
-    <div class="input-box" id="input">
-        <input class="colorp" name="Color picker" type="color" alpha>
-        <label for="colorp">color</label>
+<div class="app-container">
+    <div class="upper-container">
+        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+        <button class="generic-btn open-file-btn" onclick="openFileDialog()">Select file</button>
+        <button class="generic-btn reload-style-btn" onclick="reloadDynDocs()">Reload style</button>
+        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
     </div>
-</div>
-
-<div class="lower-container">
-
-    <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
-    <button class="generic-btn" onclick="saveFileAs()">Save as</button>
-    <button class="generic-btn" onclick="saveFile()">Save file</button>
-    <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
-
+    <div class="main-container">
+        <div id="groups-container" class="groups-container">
+            <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+            <button id="add-group-btn" class="generic-btn add-group-btn" onclick="addColorGroup()">+</button>
+            <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
+            <div id="groups-content" class="groups-content"></div>
+        </div>
+        <div class="screenshot-and-desc-container">
+            <div class="screenshot-container">
+                <!--  -->
+            </div>
+            <div class="desc-container">
+                <!--  -->
+            </div>
+        </div>
+    </div>
+    <div class="lower-container">
+        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+        <button class="generic-btn" onclick="saveFileAs()">Save as</button>
+        <button class="generic-btn" onclick="saveFile()">Save file</button>
+        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
+    </div>
 </div>
