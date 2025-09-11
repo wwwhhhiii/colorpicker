@@ -97,7 +97,6 @@ function createColorGroup() {
         }
         event.target.elemsHidden = !event.target.elemsHidden;
         event.stopPropagation();
-        window.alert("clicked");
     });
     return group;
 }
