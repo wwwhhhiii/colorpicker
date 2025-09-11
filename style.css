@@ -54,6 +54,10 @@
     bottom: 0;
 }
 
+.colors-group {
+    cursor: pointer;
+}
+
 .screenshot-and-desc-container {
     background-color: rgb(255, 0, 0);
     float: right;
