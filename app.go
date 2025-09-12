@@ -1,9 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -35,12 +41,219 @@ func (a *App) OpenFileDialog() (string, error) {
 	return file, err
 }
 
-func parseColorFile(f string) ([]string, error) {
-	return []string{"hello from GOLANG", "test1", "test2"}, nil
+type Color struct {
+	Rgb   [3]uint8 `json:"rgb"`
+	Alpha float32  `json:"alpha"`
+}
+
+func NewColor(rgb [3]uint8, alpha float32) *Color {
+	return &Color{
+		Rgb:   rgb,
+		Alpha: alpha,
+	}
+}
+
+// colorspace:
+// 0 - rgb
+// 1 - hsv
+type ColorGroup struct {
+	Name       string   `json:"name"`
+	Colorspace int      `json:"colorspace"`
+	Colors     []*Color `json:"colors"`
+}
+
+// colorspace:
+// 0 - rgb
+// 1 - hsv
+func NewColorGroup(name string, colorspace int, colors []*Color) *ColorGroup {
+	return &ColorGroup{
+		Name:       name,
+		Colorspace: colorspace,
+		Colors:     colors,
+	}
+}
+
+// excpects color digit to be valid uint8 or float32
+func parseColorDigit(digit string) (*uint8, *float32, error) {
+	i, err := strconv.ParseUint(digit, 10, 8)
+	if err != nil {
+		fl, err := strconv.ParseFloat(digit, 32)
+		if err != nil {
+			return nil, nil, err
+		}
+		fl32 := float32(fl)
+		return nil, &fl32, nil
+	}
+	ui8 := uint8(i)
+	return &ui8, nil, nil
+}
+
+// expects  "0, 255, 255, 1.0" as runes
+func parseColor(colorRunes []rune) (*Color, error) {
+	rgb := [3]uint8{}
+	var alpha float32
+	strDigits := strings.Split(string(colorRunes), ",")
+	if len(strDigits) != 4 {
+		return nil, errors.New("wrong color format")
+	}
+	for i, sd := range strDigits {
+		u, f, err := parseColorDigit(sd)
+		if err != nil {
+			return nil, err
+		}
+		if u != nil {
+			rgb[i] = *u
+		}
+		if f != nil {
+			alpha = *f
+		}
+	}
+	return NewColor(rgb, alpha), nil
+}
+
+// expects
+//
+//	[ 0, 255, 255, 1.0 ],
+//	[ 0, 255, 255, 1.0 ],
+//	[ 0, 255, 255, 1.0 ],
+//	[ 0, 255, 255, 1.0 ]
+//
+// as runes
+func readColorsGroup(group []rune, cgName string) (*ColorGroup, error) {
+	colors := make([]*Color, 0, 20)
+	var brackets int16 = 0
+	colorStart := 0
+
+	for i, r := range group {
+		if r == '\t' || r == '\n' || r == ' ' {
+			continue
+		}
+		if brackets == 1 {
+			// inside color array
+		}
+		if r == '[' {
+			brackets++
+			if brackets > 1 {
+				return nil, fmt.Errorf(
+					"bad file format, too many square brackets opened: %d", brackets)
+			}
+			if brackets == 1 {
+				colorStart = i + 1
+			}
+		}
+		if r == ']' {
+			brackets--
+			if brackets < 0 {
+				return nil, fmt.Errorf(
+					"bad file format, too many square brackets closed: %d", brackets)
+			}
+		}
+		// if brackets == 1 {
+
+		// }
+		if brackets == 0 {
+			// color array ended
+			color, err := parseColor(group[colorStart:i])
+			if err != nil {
+				return nil, err
+			}
+			colors = append(colors, color)
+		}
+	}
+
+	// TODO hardcoded rgb
+	return NewColorGroup(cgName, 0, colors), nil
+
+}
+
+func parseColorFile(reader io.RuneReader) ([]ColorGroup, error) {
+	groups := make([]ColorGroup, 0, 50)
+	groupRunes := make([]rune, 0, 1000)
+	groupNameRunes := make([]rune, 0, 100)
+	var curlyBrackets int = 0
+	var squareBrackets int = 0
+
+	// search start of the colors block
+	for {
+		r, _, err := reader.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return nil, errors.New("not found start of the colors section in a file")
+			}
+			return nil, err
+		}
+		if r == '{' {
+			curlyBrackets++
+		}
+		if curlyBrackets == 2 {
+			break
+		}
+	}
+
+	// read blocks
+parseLoop:
+	for {
+		groupNameRunes = groupNameRunes[:0]
+		// read name
+		for {
+			r, _, err := reader.ReadRune()
+			if err != nil {
+				if err == io.EOF {
+					return nil, errors.New("end of file while excpecting color group name")
+				}
+				return nil, err
+			}
+			if r == '}' {
+				break parseLoop
+			}
+			if r == ':' {
+				break
+			}
+			if unicode.IsLetter(r) {
+				groupNameRunes = append(groupNameRunes, r)
+			}
+		}
+
+		// read colors
+		squareBrackets = 0
+		groupRunes = groupRunes[:0]
+		for {
+			r, _, err := reader.ReadRune()
+			if err != nil {
+				if err == io.EOF {
+					return nil, errors.New("end of file while excpecting colors array")
+				}
+				return nil, err
+			}
+			if r == '\t' || r == '\n' || r == ' ' {
+				continue
+			}
+			if r == '[' {
+				squareBrackets++
+			}
+			if squareBrackets > 1 {
+				groupRunes = append(groupRunes, r)
+			}
+			if r == ']' {
+				squareBrackets--
+				// end of colors array
+				if squareBrackets == 0 {
+					colorGroup, err := readColorsGroup(groupRunes, string(groupNameRunes))
+					if err != nil {
+						return nil, err
+					}
+					groups = append(groups, *colorGroup)
+					break
+				}
+			}
+		}
+	}
+
+	return groups, nil
 }
 
 // returns empty string and no error if no file was chosen
-func (a *App) LoadColorsFile() ([]string, error) {
+func (a *App) LoadColorsFile() ([]ColorGroup, error) {
 	selectedFile, err := a.OpenFileDialog()
 	if err != nil {
 		return nil, err
@@ -49,10 +262,15 @@ func (a *App) LoadColorsFile() ([]string, error) {
 	if selectedFile == "" {
 		return nil, nil
 	}
-	content, err := parseColorFile(selectedFile)
+	file, err := os.Open(selectedFile)
 	if err != nil {
-		return nil, errors.New("error parsing colors file")
+		return nil, err
 	}
-
-	return content, nil
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	colorGroups, err := parseColorFile(reader)
+	if err != nil {
+		return nil, err
+	}
+	return colorGroups, nil
 }

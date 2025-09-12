@@ -48,15 +48,19 @@ window.reloadDynDocs = async function() {
     });
 };
 
-function createColorElement(name) {
+function createColorElement(name, r, g, b) {
     let colorElement = document.createElement("li");
     colorElement.className = "color-element";
     colorElement.textContent = name;
     let colorInput = document.createElement("input");
     colorInput.type = "color";
+    let rhex = r.toString(16).padStart(2, '0');
+    let ghex = g.toString(16).padStart(2, '0');
+    let bhex = b.toString(16).padStart(2, '0');
+    colorInput.value = `#${rhex}${ghex}${bhex}`;
     colorElement.appendChild(colorInput);
     colorElement.addEventListener("dblclick", (event) => {
-        window.alert(`you clicked ${name} element`);
+        window.alert(`you clicked ${name}`);
     });
     return colorElement;
 }
@@ -65,16 +69,32 @@ window.openFileDialog = function () {
     try {
         LoadColorsFile()
             .then((result) => {
-                let colorsMenu = document.getElementById("colors-groups-menu");
-                result.forEach(element => {
-                    colorsMenu.appendChild(createColorElement(element));
+                console.log("color groups loaded", result);
+                let groupsContiner = document.getElementById("groups-content");
+                if (result === null) {
+                    return;
+                }
+                result.forEach(group => {
+                    let colorsGroup = createColorGroup();
+                    colorsGroup.textContent = group.name;
+                    group.colors.forEach(color => {
+                        colorsGroup.appendChild(createColorElement(
+                            "test color name",
+                            color.rgb[0],
+                            color.rgb[1],
+                            color.rgb[2],
+                        ));
+                    })
+                    
+                    groupsContiner.appendChild(colorsGroup);
                 });
             })
             .catch((err) => {
                 console.error(err);
-                throw new Erorr("error:", err)
+                window.alert(`critical error: ${err}`)
             });
     } catch (err) {
+        window.alert(`critical error: ${err}`)
         console.error(err);
     }
 };
@@ -84,10 +104,6 @@ function createColorGroup() {
     group.className = "colors-group";
     group.textContent = "Подгруппа";
     group.elemsHidden = false;
-
-    // TODO remove test elements
-    group.appendChild(createColorElement("test_1"));
-    group.appendChild(createColorElement("test_2"));
 
     // fold/unfold child elements with double click
     group.addEventListener("dblclick", (event) => {
