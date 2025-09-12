@@ -57,23 +57,25 @@ window.openFileDialog = function () {
     try {
         LoadColorsFile()
             .then((result) => {
-                console.log("color groups loaded", result);
                 let groupsContiner = document.getElementById("groups-content");
                 if (result === null) {
                     return;
                 }
                 result.forEach(group => {
-                    let colorsGroup = createColorGroup(group.name);
-                    groupsContiner.appendChild(createColorGroupLabel(colorsGroup));
+                    let res = createColorGroup(group.name);
+                    let colorsGroupContainer = res[0];
+                    let colorsGroupMenu = res[1];
+                    colorsGroupContainer.appendChild(createColorGroupLabel(colorsGroupMenu));
+                    colorsGroupContainer.appendChild(colorsGroupMenu);
                     group.colors.forEach(color => {
-                        colorsGroup.appendChild(createColorElement(
+                        colorsGroupMenu.appendChild(createColorElement(
                             "test color name",
                             color.rgb[0],
                             color.rgb[1],
                             color.rgb[2],
                         ));
                     })
-                    groupsContiner.appendChild(colorsGroup);
+                    groupsContiner.appendChild(colorsGroupContainer);
                 });
             })
             .catch((err) => {

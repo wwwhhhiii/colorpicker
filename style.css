@@ -54,7 +54,17 @@
     bottom: 0;
 }
 
-.colors-group {
+.color-group-container {
+    background-color: darkgrey;
+}
+
+.color-group-label {
+    background-color: plum;
+    cursor: pointer;
+}
+
+.colors-group-menu {
+    background-color: deepskyblue;
     cursor: pointer;
 }
 

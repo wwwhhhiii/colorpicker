@@ -19,7 +19,7 @@ export function createColorElement(name, r, g, b) {
 
 export function createColorGroupLabel(colorGroupElem) {
     let label = document.createElement("label");
-    label.class = "group-label";
+    label.classNme = "color-group-label";
     label.for = colorGroupElem.id;
     label.htmlFor = colorGroupElem.id;
     label.textContent = colorGroupElem.name;
@@ -47,10 +47,16 @@ export function createColorGroupLabel(colorGroupElem) {
 }
 
 export function createColorGroup(groupName) {
-    let group = document.createElement("menu");
-    group.id = groupName;
-    group.name = groupName;
-    group.className = "colors-group";
-    group.elemsHidden = false;
-    return group;
+    let menu = document.createElement("menu");
+    menu.id = groupName;
+    menu.name = groupName;
+    menu.className = "colors-group-menu";
+    menu.elemsHidden = false;
+
+    let colorGroupContainer = document.createElement("div");
+    colorGroupContainer.className = "color-group-container";
+
+    colorGroupContainer.appendChild(menu);
+
+    return [colorGroupContainer, menu];
 }
