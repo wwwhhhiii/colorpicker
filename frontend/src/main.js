@@ -1,6 +1,11 @@
 import './style.css';
 
 import {LoadColorsFile, OpenFileDialog} from "../wailsjs/go/main/App";
+import { 
+    createColorElement,
+    createColorGroupLabel,
+    createColorGroup 
+} from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
 const APP_SOURCE_CSS = 'style.css';
@@ -48,23 +53,6 @@ window.reloadDynDocs = async function() {
     });
 };
 
-function createColorElement(name, r, g, b) {
-    let colorElement = document.createElement("li");
-    colorElement.className = "color-element";
-    colorElement.textContent = name;
-    let colorInput = document.createElement("input");
-    colorInput.type = "color";
-    let rhex = r.toString(16).padStart(2, '0');
-    let ghex = g.toString(16).padStart(2, '0');
-    let bhex = b.toString(16).padStart(2, '0');
-    colorInput.value = `#${rhex}${ghex}${bhex}`;
-    colorElement.appendChild(colorInput);
-    colorElement.addEventListener("dblclick", (event) => {
-        window.alert(`you clicked ${name}`);
-    });
-    return colorElement;
-}
-
 window.openFileDialog = function () {
     try {
         LoadColorsFile()
@@ -75,8 +63,8 @@ window.openFileDialog = function () {
                     return;
                 }
                 result.forEach(group => {
-                    let colorsGroup = createColorGroup();
-                    colorsGroup.textContent = group.name;
+                    let colorsGroup = createColorGroup(group.name);
+                    groupsContiner.appendChild(createColorGroupLabel(colorsGroup));
                     group.colors.forEach(color => {
                         colorsGroup.appendChild(createColorElement(
                             "test color name",
@@ -85,7 +73,6 @@ window.openFileDialog = function () {
                             color.rgb[2],
                         ));
                     })
-                    
                     groupsContiner.appendChild(colorsGroup);
                 });
             })
@@ -99,27 +86,8 @@ window.openFileDialog = function () {
     }
 };
 
-function createColorGroup() {
-    let group = document.createElement("menu");
-    group.className = "colors-group";
-    group.textContent = "Подгруппа";
-    group.elemsHidden = false;
-
-    // fold/unfold child elements with double click
-    group.addEventListener("dblclick", (event) => {
-        let groupColors = event.target.getElementsByClassName("color-element");
-        for (let color of groupColors) {
-            color.style.display = event.target.elemsHidden ? 'block' : 'none';
-        }
-        event.target.elemsHidden = !event.target.elemsHidden;
-        event.stopPropagation();
-    });
-    return group;
-}
-
 window.addColorGroup = function () {
-    let groupsContainer = document.getElementById("groups-content");
-    groupsContainer.appendChild(createColorGroup());
+    window.alert("not ready yet")
 }
 
 let stub = function () { window.alert("button is not ready"); };
@@ -138,10 +106,11 @@ function initColorGroups() {
     // colorsMenu.appendChild(testListItem);
 }
 
-(async function () { 
+(async function () {
     await window.reloadDynDocs();
     initUpperContainer();
     initColorGroups();
+    // WindowSetMinSize(900, 600)
 } )();
 
 
