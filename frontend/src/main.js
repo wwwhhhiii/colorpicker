@@ -2,13 +2,14 @@ import './style.css';
 
 import {LoadColorsFile} from "../wailsjs/go/main/App";
 import { 
-    createColorGroup, elems
+    createColorGroup
 } from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
 const APP_SOURCE_CSS = 'style.css';
 
 let appElement = document.querySelector('#app');
+let imagePlaceholderElem = null;
 
 window.reloadDynDocs = async function() {
     await fetch(APP_SOURCE_HTML)
@@ -60,7 +61,7 @@ window.openFileDialog = function () {
                     return;
                 }
                 result.forEach(group => {
-                    let res = createColorGroup(group);
+                    let res = createColorGroup(group, imagePlaceholderElem);
                     groupsContiner.appendChild(res.containerElem);
                 });
             })
@@ -94,7 +95,7 @@ function initColorGroups() {
     await window.reloadDynDocs();
     initUpperContainer();
     initColorGroups();
-    elems.screenshotDest = document.getElementById("__clipboard-img-dest");
+    imagePlaceholderElem = document.getElementById("__clipboard-img-dest");
     // WindowSetMinSize(900, 600)
 } )();
 

@@ -1,10 +1,7 @@
 var _selectedColorElement = null;
-export var elems = {
-    screenshotDest: null
-}
 
 // color element, i.e. color line
-function createColorElement(name, r, g, b) {
+function createColorElement(name, imagePlaceholderElem, r, g, b) {
     let colorElement = document.createElement("li");
     colorElement.className = "color-element";
     colorElement.textContent = name;
@@ -42,7 +39,7 @@ function createColorElement(name, r, g, b) {
                 }
                 let blob = await item.getType("image/png");
                 let screenshotURL = URL.createObjectURL(blob);
-                elems.screenshotDest.src = screenshotURL;
+                imagePlaceholderElem.src = screenshotURL;
                 _selectedColorElement.colorScreenshotURL = screenshotURL;
             }
         } catch (error) {
@@ -57,14 +54,14 @@ function createColorElement(name, r, g, b) {
         if (_selectedColorElement !== null) {
             console.log("setting previous color elemnent bg color to none");
             _selectedColorElement.style.backgroundColor = '';
-            elems.screenshotDest.src = "";
+            imagePlaceholderElem.src = "";
         }
         _selectedColorElement = colorElement;
         _selectedColorElement.style.backgroundColor = '#f003fc';
         let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
         oldDesc.replaceWith(colorElement.colorDescription);
         if (_selectedColorElement.colorScreenshotURL !== null) {
-            elems.screenshotDest.src = _selectedColorElement.colorScreenshotURL;
+            imagePlaceholderElem.src = _selectedColorElement.colorScreenshotURL;
         };
     });
 
@@ -118,7 +115,7 @@ function createColorGroupLabel(colorGroupElem) {
     return label;
 }
 
-export function createColorGroup(group) {
+export function createColorGroup(group, imagePlaceholderElem) {
     let menu = document.createElement("menu");
     menu.id = group.name;  // TODO should be unique
     menu.name = group.name;
@@ -133,6 +130,7 @@ export function createColorGroup(group) {
     group.colors.forEach(color => {
         menu.appendChild(createColorElement(
             "test color name",
+            imagePlaceholderElem,
             color.rgb[0],
             color.rgb[1],
             color.rgb[2],
