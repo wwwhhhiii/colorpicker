@@ -1,4 +1,5 @@
-export function createColorElement(name, r, g, b) {
+// color element, i.e. color line
+function createColorElement(name, r, g, b) {
     let colorElement = document.createElement("li");
     colorElement.className = "color-element";
     colorElement.textContent = name;
@@ -18,7 +19,7 @@ export function createColorElement(name, r, g, b) {
     return colorElement;
 }
 
-export function createColorGroupLabel(colorGroupElem) {
+function createColorGroupLabel(colorGroupElem) {
     let label = document.createElement("label");
     label.classNme = "color-group-label";
     label.for = colorGroupElem.id;
@@ -65,16 +66,37 @@ export function createColorGroupLabel(colorGroupElem) {
     return label;
 }
 
-export function createColorGroup(groupName) {
+export function createColorGroup(group) {
     let menu = document.createElement("menu");
-    menu.id = groupName;
-    menu.name = groupName;
+    menu.id = group.name;  // TODO should be unique
+    menu.name = group.name;
     menu.className = "colors-group-menu";
     menu.elemsHidden = false;
 
     let colorGroupContainer = document.createElement("div");
     colorGroupContainer.className = "color-group-container";
+    colorGroupContainer.id = window.crypto.randomUUID();
     let colorGroupLabel = createColorGroupLabel(menu);
+
+    // each color in a color group has its own description
+    let colorDesc = document.createElement("textarea");
+
+    group.colors.forEach(color => {
+        menu.appendChild(createColorElement(
+            "test color name",
+            color.rgb[0],
+            color.rgb[1],
+            color.rgb[2],
+        ));
+    });
+
+    colorGroupContainer.appendChild(colorGroupLabel);
+    colorGroupContainer.appendChild(menu);
     
-    return [colorGroupContainer, colorGroupLabel, menu];
+    return {
+        containerElem: colorGroupContainer,
+        labelElem: colorGroupLabel,
+        menuElem: menu,
+        descEelem: colorDesc,
+    }
 }

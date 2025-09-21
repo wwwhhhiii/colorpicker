@@ -2,8 +2,6 @@ import './style.css';
 
 import {LoadColorsFile, OpenFileDialog} from "../wailsjs/go/main/App";
 import { 
-    createColorElement,
-    createColorGroupLabel,
     createColorGroup 
 } from './elements';
 
@@ -62,21 +60,8 @@ window.openFileDialog = function () {
                     return;
                 }
                 result.forEach(group => {
-                    let res = createColorGroup(group.name);
-                    let colorsGroupContainer = res[0];
-                    let colorsGroupLabel = res[1];
-                    let colorsGroupMenu = res[2];
-                    colorsGroupContainer.appendChild(colorsGroupLabel);
-                    colorsGroupContainer.appendChild(colorsGroupMenu);
-                    group.colors.forEach(color => {
-                        colorsGroupMenu.appendChild(createColorElement(
-                            "test color name",
-                            color.rgb[0],
-                            color.rgb[1],
-                            color.rgb[2],
-                        ));
-                    })
-                    groupsContiner.appendChild(colorsGroupContainer);
+                    let res = createColorGroup(group);
+                    groupsContiner.appendChild(res.containerElem);
                 });
             })
             .catch((err) => {
