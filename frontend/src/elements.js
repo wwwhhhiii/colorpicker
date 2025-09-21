@@ -1,3 +1,8 @@
+var _selectedColorElement = null;
+export var elems = {
+    screenshotDest: null
+}
+
 // color element, i.e. color line
 function createColorElement(name, r, g, b) {
     let colorElement = document.createElement("li");
@@ -21,11 +26,46 @@ function createColorElement(name, r, g, b) {
     colorTextarea.style.resize = 'none';
     colorTextarea.className = "__replacable-color-desc";
     colorElement.colorDescription = colorTextarea;
+    colorElement.colorScreenshotURL = null;
+
+    async function pasteImage() {
+        console.log("paste triggered");
+        if (_selectedColorElement === null) {
+            window.alert("select a color line before paste");
+            return;
+        }
+        try {
+            let clipboardContent = await navigator.clipboard.read();
+            for (let item of clipboardContent) {
+                if (!item.types.includes("image/png")) {
+                    throw new Error("clipboard does not contain image");
+                }
+                let blob = await item.getType("image/png");
+                let screenshotURL = URL.createObjectURL(blob);
+                elems.screenshotDest.src = screenshotURL;
+                _selectedColorElement.colorScreenshotURL = screenshotURL;
+            }
+        } catch (error) {
+            console.log(error);
+            window.alert(error);
+        }
+    };
+
+    colorElement.addEventListener("paste", pasteImage);
 
     colorElement.addEventListener("click", (event) => {
-        console.log("color clicked");
+        if (_selectedColorElement !== null) {
+            console.log("setting previous color elemnent bg color to none");
+            _selectedColorElement.style.backgroundColor = '';
+            elems.screenshotDest.src = "";
+        }
+        _selectedColorElement = colorElement;
+        _selectedColorElement.style.backgroundColor = '#f003fc';
         let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
         oldDesc.replaceWith(colorElement.colorDescription);
+        if (_selectedColorElement.colorScreenshotURL !== null) {
+            elems.screenshotDest.src = _selectedColorElement.colorScreenshotURL;
+        };
     });
 
     return colorElement;

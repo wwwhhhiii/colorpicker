@@ -1,8 +1,8 @@
 import './style.css';
 
-import {LoadColorsFile, OpenFileDialog} from "../wailsjs/go/main/App";
+import {LoadColorsFile} from "../wailsjs/go/main/App";
 import { 
-    createColorGroup 
+    createColorGroup, elems
 } from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
@@ -87,17 +87,14 @@ function initUpperContainer() {
 }
 
 function initColorGroups() {
-    // let colorsMenu = document.getElementById("colors-groups-menu");
-    // let testListItem = document.createElement("li");
-    // testListItem.textContent = "click me";
-    // testListItem.addEventListener("dblclick", (event) => {stub()});
-    // colorsMenu.appendChild(testListItem);
+
 }
 
 (async function () {
     await window.reloadDynDocs();
     initUpperContainer();
     initColorGroups();
+    elems.screenshotDest = document.getElementById("__clipboard-img-dest");
     // WindowSetMinSize(900, 600)
 } )();
 

@@ -75,10 +75,17 @@
     width: 75%;
 }
 
+
+
+/* color screenshots */
 .screenshot-container {
     background-color: aqua;
     height: 70%;
     width: 100%;
+}
+.__clipboard-img-dest {
+    max-width: 100%;
+    height: auto;
 }
 
 
