@@ -10,10 +10,11 @@ export function createColorElement(name, r, g, b) {
     let bhex = b.toString(16).padStart(2, '0');
     colorInput.value = `#${rhex}${ghex}${bhex}`;
     colorElement.appendChild(colorInput);
-    
+
     colorElement.addEventListener("dblclick", (event) => {
         window.alert(`you clicked ${event.target.textContent}`);
     });
+
     return colorElement;
 }
 
@@ -35,13 +36,31 @@ export function createColorGroupLabel(colorGroupElem) {
         event.stopPropagation();
     });
 
+    let renameField = document.createElement("input");
+    renameField.type = "text";
+
+    // rename label with doublelick
     label.addEventListener("dblclick", (event) => {
-        let newName = prompt("Enter new group name");
-        if (newName !== null && newName != "") {
-            event.target.textContent = newName;
-        }
+        renameField.value = label.textContent;
+        label.replaceWith(renameField);
+        renameField.focus();
+        renameField.select();
+
         event.stopPropagation();
-    })
+    });
+    renameField.addEventListener("keydown", (event) => {
+        if (event.key == "Enter") {
+            if (renameField.value !== null && renameField != "") {
+                label.textContent = renameField.value;
+            }
+            renameField.replaceWith(label);
+            event.preventDefault();
+        }
+        if (event.key == "Escape") {
+            renameField.replaceWith(label);
+            event.preventDefault();
+        }
+    });
 
     return label;
 }
@@ -55,8 +74,7 @@ export function createColorGroup(groupName) {
 
     let colorGroupContainer = document.createElement("div");
     colorGroupContainer.className = "color-group-container";
-
-    colorGroupContainer.appendChild(menu);
-
-    return [colorGroupContainer, menu];
+    let colorGroupLabel = createColorGroupLabel(menu);
+    
+    return [colorGroupContainer, colorGroupLabel, menu];
 }

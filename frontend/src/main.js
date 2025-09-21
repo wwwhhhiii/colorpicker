@@ -64,8 +64,9 @@ window.openFileDialog = function () {
                 result.forEach(group => {
                     let res = createColorGroup(group.name);
                     let colorsGroupContainer = res[0];
-                    let colorsGroupMenu = res[1];
-                    colorsGroupContainer.appendChild(createColorGroupLabel(colorsGroupMenu));
+                    let colorsGroupLabel = res[1];
+                    let colorsGroupMenu = res[2];
+                    colorsGroupContainer.appendChild(colorsGroupLabel);
                     colorsGroupContainer.appendChild(colorsGroupMenu);
                     group.colors.forEach(color => {
                         colorsGroupMenu.appendChild(createColorElement(
