@@ -16,6 +16,18 @@ function createColorElement(name, r, g, b) {
         window.alert(`you clicked ${event.target.textContent}`);
     });
 
+    // each color in a color group has its own description
+    let colorTextarea = document.createElement("textarea");
+    colorTextarea.style.resize = 'none';
+    colorTextarea.className = "__replacable-color-desc";
+    colorElement.colorDescription = colorTextarea;
+
+    colorElement.addEventListener("click", (event) => {
+        console.log("color clicked");
+        let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
+        oldDesc.replaceWith(colorElement.colorDescription);
+    });
+
     return colorElement;
 }
 
@@ -78,9 +90,6 @@ export function createColorGroup(group) {
     colorGroupContainer.id = window.crypto.randomUUID();
     let colorGroupLabel = createColorGroupLabel(menu);
 
-    // each color in a color group has its own description
-    let colorDesc = document.createElement("textarea");
-
     group.colors.forEach(color => {
         menu.appendChild(createColorElement(
             "test color name",
@@ -97,6 +106,5 @@ export function createColorGroup(group) {
         containerElem: colorGroupContainer,
         labelElem: colorGroupLabel,
         menuElem: menu,
-        descEelem: colorDesc,
     }
 }

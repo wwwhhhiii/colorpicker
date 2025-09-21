@@ -81,11 +81,22 @@
     width: 100%;
 }
 
+
+
+/* color description */
 .desc-container {
     background-color: orangered;
     height: 30%;
     width: 100%;
 }
+
+.__replacable-color-desc {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
 
 .lower-container {
     background-color: blueviolet;
