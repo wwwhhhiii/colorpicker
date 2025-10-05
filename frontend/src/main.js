@@ -96,7 +96,6 @@ function initColorGroups() {
     initUpperContainer();
     initColorGroups();
     imagePlaceholderElem = document.getElementById("__clipboard-img-dest");
-    // WindowSetMinSize(900, 600)
 } )();
 
 

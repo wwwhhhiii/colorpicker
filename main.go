@@ -42,9 +42,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "colorpick-vanilla",
-		Width:  1024,
-		Height: 768,
+		Title:     "colorpick-vanilla",
+		Width:     1024,
+		Height:    768,
+		MinWidth:  900,
+		MinHeight: 600,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
 			Handler: NewFileLoader(),
