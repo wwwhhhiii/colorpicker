@@ -26,7 +26,6 @@ function createColorElement(name, imagePlaceholderElem, r, g, b) {
     colorElement.colorScreenshotURL = null;
 
     async function pasteImage() {
-        console.log("paste triggered");
         if (_selectedColorElement === null) {
             window.alert("select a color line before paste");
             return;
