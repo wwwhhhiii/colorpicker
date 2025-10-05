@@ -82,7 +82,9 @@
     background-color: aqua;
     height: 70%;
     width: 100%;
+    overflow: scroll;
 }
+
 .__clipboard-img-dest {
     max-width: 100%;
     height: auto;
