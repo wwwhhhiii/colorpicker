@@ -1,50 +1,71 @@
 var _selectedColorElement = null;
 
-// img tag that contains current screenshot
-function configureImageContainer(containerElem) {
-    containerElem._scale = 1;
-    containerElem._isPanning = false;
-    containerElem._ptX = 0;
-    containerElem._ptY = 0;
-    containerElem._start = {x: 0, y: 0};
+// screenshot, description, etc.
+class ColorView {
+    constructor(screenshotURL) {
+        this._imgContainer = document.createElement("div");
+        this._imgContainer.className = "screenshot-container";
+        this._imgElement = document.createElement("img");
+        this._imgElement.className = "clipboard-img";
+        this._imgElement.src = screenshotURL;
 
-    let stopPanning = function(e) {
+        this._imgContainer.appendChild(this._imgElement);
+        this._configureImageContainer(this._imgContainer);
+    }
+
+    get imgContainer() {
+        return this._imgContainer;
+    }
+
+    updateImgSrc(newSrc) {
+        this._imgElement.src = newSrc;
+    }
+
+    _configureImageContainer(containerElem) {
+            containerElem._scale = 1;
         containerElem._isPanning = false;
-        containerElem.style.cursor = "default";
-    };
-    containerElem.onmousedown = function(e) {
-        e.preventDefault();
-        containerElem._start.x = e.clientX - containerElem._ptX;
-        containerElem._start.y = e.clientY - containerElem._ptY;
-        containerElem._isPanning = true;
-        containerElem.style.cursor = "grab";
-    };
-    containerElem.onmouseup = stopPanning;
-    containerElem.onmouseleave = stopPanning;
-    containerElem.onmousemove = function(e) {
-        e.preventDefault();
-        if (!containerElem._isPanning) {
-            return;
-        }
-        containerElem._ptX = e.clientX - containerElem._start.x;
-        containerElem._ptY = e.clientY - containerElem._start.y;
-        containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
-    };
-    containerElem.onwheel = function(e) {
-        e.preventDefault();
-        if (containerElem._isPanning) {
-            return;
-        }
-        let x = (e.clientX - containerElem._ptX) / containerElem._scale;
-        let y = (e.clientY - containerElem._ptY) / containerElem._scale;
-        let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
-        (delta > 0) ? (containerElem._scale *= 1.1) : (containerElem._scale /= 1.1);
-        containerElem._ptX = e.clientX - x * containerElem._scale;
-        containerElem._ptY = e.clientY - y * containerElem._scale;
-        containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
-    };
+        containerElem._ptX = 0;
+        containerElem._ptY = 0;
+        containerElem._start = {x: 0, y: 0};
 
-    return containerElem;
+        let stopPanning = function(e) {
+            containerElem._isPanning = false;
+            containerElem.style.cursor = "default";
+        };
+        containerElem.onmousedown = function(e) {
+            e.preventDefault();
+            containerElem._start.x = e.clientX - containerElem._ptX;
+            containerElem._start.y = e.clientY - containerElem._ptY;
+            containerElem._isPanning = true;
+            containerElem.style.cursor = "grab";
+        };
+        containerElem.onmouseup = stopPanning;
+        containerElem.onmouseleave = stopPanning;
+        containerElem.onmousemove = function(e) {
+            e.preventDefault();
+            if (!containerElem._isPanning) {
+                return;
+            }
+            containerElem._ptX = e.clientX - containerElem._start.x;
+            containerElem._ptY = e.clientY - containerElem._start.y;
+            containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+        };
+        containerElem.onwheel = function(e) {
+            e.preventDefault();
+            if (containerElem._isPanning) {
+                return;
+            }
+            let x = (e.clientX - containerElem._ptX) / containerElem._scale;
+            let y = (e.clientY - containerElem._ptY) / containerElem._scale;
+            let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
+            (delta > 0) ? (containerElem._scale *= 1.1) : (containerElem._scale /= 1.1);
+            containerElem._ptX = e.clientX - x * containerElem._scale;
+            containerElem._ptY = e.clientY - y * containerElem._scale;
+            containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+        };
+
+        return containerElem;
+    }
 }
 
 // color element, i.e. color line
@@ -70,9 +91,10 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
     colorTextarea.style.resize = 'none';
     colorTextarea.className = "__replacable-color-desc";
     colorElement.colorDescription = colorTextarea;
-    colorElement.colorScreenshotURL = null;
-    colorElement._imgContainerElement = null;
-    colorElement._imgElement = null;
+    // colorElement.colorScreenshotURL = null;
+    // colorElement._imgContainerElement = null;
+    // colorElement._imgElement = null;
+    colorElement.colorView = null;
 
     colorElement.onpaste = async function () {
         if (_selectedColorElement === null) {
@@ -87,24 +109,11 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
                 }
                 let blob = await item.getType("image/png");
                 let screenshotURL = URL.createObjectURL(blob);
-                let isScreenshotViewExist = colorElement._imgContainerElement !== null;
-                if (!isScreenshotViewExist) {
-                    // TODO try to refactor with 'Class'
-                    let imgContainer = document.createElement("div");
-                    imgContainer.className = "screenshot-container";
-                    let imgElement = document.createElement("img");
-                    imgElement.className = "clipboard-img";
-                    imgElement.src = screenshotURL;
-                    imgContainer.appendChild(imgElement);
-                    colorElement._imgElement = imgElement;
-                    colorElement._imgContainerElement = configureImageContainer(imgContainer);
-                    // place div>img inside container
-                    screenshotViewContainer.appendChild(colorElement._imgContainerElement);
+                if (colorElement.colorView === null) {
+                    colorElement.colorView = new ColorView(screenshotURL);
+                    screenshotViewContainer.appendChild(colorElement.colorView.imgContainer);
                 } else {
-                    if (colorElement._imgElement === null) {
-                        throw new Error("somehow colorElement._imgElement is null");
-                    }
-                    colorElement._imgElement.src = screenshotURL;
+                    colorElement.colorView.updateImgSrc(screenshotURL);
                 }
             }
         } catch (error) {
@@ -120,11 +129,11 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
         let clickedColorElement = colorElement;
 
         if (_selectedColorElement !== null) {
-            if (_selectedColorElement._imgContainerElement !== null) {
-                screenshotViewContainer.removeChild(_selectedColorElement._imgContainerElement);
+            if (_selectedColorElement.colorView !== null) {
+                screenshotViewContainer.removeChild(_selectedColorElement.colorView.imgContainer);
             }
-            if (clickedColorElement._imgContainerElement !== null) {
-                screenshotViewContainer.appendChild(clickedColorElement._imgContainerElement);
+            if (clickedColorElement.colorView !== null) {
+                screenshotViewContainer.appendChild(clickedColorElement.colorView.imgContainer);
             }
         }
         _selectedColorElement = clickedColorElement;
