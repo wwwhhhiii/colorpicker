@@ -69,7 +69,7 @@
 }
 
 .screenshot-and-desc-container {
-    background-color: rgb(255, 0, 0);
+    background-color: rgb(51, 51, 51);
     float: right;
     height: 100%;
     width: 75%;
@@ -78,17 +78,23 @@
 
 
 /* color screenshots */
-.screenshot-container {
-    background-color: aqua;
+.screenshot-container-outer {
+    overflow: scroll;
     height: 70%;
     width: 100%;
-    overflow: scroll;
 }
-
-.__clipboard-img-dest {
-    max-width: 100%;
+.screenshot-container {
+    /* width: 100%;
+    height: 100%; */
+    background-color: aqua;
+    /* transform-origin: 0px 0px; */
+    transform: scale(1) translate(0px, 0px);
+    cursor: default;
+}
+.clipboard-img {
+    width: 100%;
     height: auto;
-}
+}   
 
 
 

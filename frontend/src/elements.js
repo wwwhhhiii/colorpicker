@@ -1,7 +1,54 @@
 var _selectedColorElement = null;
 
+// img tag that contains current screenshot
+function configureImageContainer(containerElem) {
+    containerElem._scale = 1;
+    containerElem._isPanning = false;
+    containerElem._ptX = 0;
+    containerElem._ptY = 0;
+    containerElem._start = {x: 0, y: 0};
+
+    let stopPanning = function(e) {
+        containerElem._isPanning = false;
+        containerElem.style.cursor = "default";
+    };
+    containerElem.onmousedown = function(e) {
+        e.preventDefault();
+        containerElem._start.x = e.clientX - containerElem._ptX;
+        containerElem._start.y = e.clientY - containerElem._ptY;
+        containerElem._isPanning = true;
+        containerElem.style.cursor = "grab";
+    };
+    containerElem.onmouseup = stopPanning;
+    containerElem.onmouseleave = stopPanning;
+    containerElem.onmousemove = function(e) {
+        e.preventDefault();
+        if (!containerElem._isPanning) {
+            return;
+        }
+        containerElem._ptX = e.clientX - containerElem._start.x;
+        containerElem._ptY = e.clientY - containerElem._start.y;
+        containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+    };
+    containerElem.onwheel = function(e) {
+        e.preventDefault();
+        if (containerElem._isPanning) {
+            return;
+        }
+        let x = (e.clientX - containerElem._ptX) / containerElem._scale;
+        let y = (e.clientY - containerElem._ptY) / containerElem._scale;
+        let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
+        (delta > 0) ? (containerElem._scale *= 1.1) : (containerElem._scale /= 1.1);
+        containerElem._ptX = e.clientX - x * containerElem._scale;
+        containerElem._ptY = e.clientY - y * containerElem._scale;
+        containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+    };
+
+    return containerElem;
+}
+
 // color element, i.e. color line
-function createColorElement(name, imagePlaceholderElem, r, g, b) {
+function createColorElement(name, screenshotViewContainer, r, g, b) {
     let colorElement = document.createElement("li");
     colorElement.className = "color-element";
     colorElement.textContent = name;
@@ -24,10 +71,12 @@ function createColorElement(name, imagePlaceholderElem, r, g, b) {
     colorTextarea.className = "__replacable-color-desc";
     colorElement.colorDescription = colorTextarea;
     colorElement.colorScreenshotURL = null;
+    colorElement._imgContainerElement = null;
+    colorElement._imgElement = null;
 
     async function pasteImage() {
         if (_selectedColorElement === null) {
-            window.alert("select a color line before paste");
+            window.alert("select color line before paste");
             return;
         }
         try {
@@ -38,30 +87,54 @@ function createColorElement(name, imagePlaceholderElem, r, g, b) {
                 }
                 let blob = await item.getType("image/png");
                 let screenshotURL = URL.createObjectURL(blob);
-                imagePlaceholderElem.src = screenshotURL;
-                _selectedColorElement.colorScreenshotURL = screenshotURL;
+                let isScreenshotViewExist = colorElement._imgContainerElement !== null;
+                if (!isScreenshotViewExist) {
+                    // TODO try to refactor with 'Class'
+                    let imgContainer = document.createElement("div");
+                    imgContainer.className = "screenshot-container";
+                    let imgElement = document.createElement("img");
+                    imgElement.className = "clipboard-img";
+                    imgElement.src = screenshotURL;
+                    imgContainer.appendChild(imgElement);
+                    colorElement._imgElement = imgElement;
+                    colorElement._imgContainerElement = configureImageContainer(imgContainer);
+                    // place div>img inside container
+                    screenshotViewContainer.appendChild(colorElement._imgContainerElement);
+                } else {
+                    if (colorElement._imgElement === null) {
+                        throw new Error("somehow colorElement._imgElement is null");
+                    }
+                    colorElement._imgElement.src = screenshotURL;
+                }
             }
         } catch (error) {
             console.log(error);
             window.alert(error);
         }
     };
-
+    // TODO try to refactor with 'onpaste'
     colorElement.addEventListener("paste", pasteImage);
 
+    // TODO try to refactor with 'onclick'
     colorElement.addEventListener("click", (event) => {
         if (_selectedColorElement !== null) {
-            console.log("setting previous color elemnent bg color to none");
             _selectedColorElement.style.backgroundColor = '';
-            imagePlaceholderElem.src = "";
         }
-        _selectedColorElement = colorElement;
+        let clickedColorElement = colorElement;
+
+        if (_selectedColorElement !== null) {
+            if (_selectedColorElement._imgContainerElement !== null) {
+                screenshotViewContainer.removeChild(_selectedColorElement._imgContainerElement);
+            }
+            if (clickedColorElement._imgContainerElement !== null) {
+                screenshotViewContainer.appendChild(clickedColorElement._imgContainerElement);
+            }
+        }
+
+        _selectedColorElement = clickedColorElement;
         _selectedColorElement.style.backgroundColor = '#f003fc';
         let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
-        oldDesc.replaceWith(colorElement.colorDescription);
-        if (_selectedColorElement.colorScreenshotURL !== null) {
-            imagePlaceholderElem.src = _selectedColorElement.colorScreenshotURL;
-        };
+        oldDesc.replaceWith(clickedColorElement.colorDescription);
     });
 
     return colorElement;
@@ -114,7 +187,7 @@ function createColorGroupLabel(colorGroupElem) {
     return label;
 }
 
-export function createColorGroup(group, imagePlaceholderElem) {
+export function createColorGroup(group, screenshotViewContainer) {
     let menu = document.createElement("menu");
     menu.id = group.name;  // TODO should be unique
     menu.name = group.name;
@@ -129,7 +202,7 @@ export function createColorGroup(group, imagePlaceholderElem) {
     group.colors.forEach(color => {
         menu.appendChild(createColorElement(
             "test color name",
-            imagePlaceholderElem,
+            screenshotViewContainer,
             color.rgb[0],
             color.rgb[1],
             color.rgb[2],

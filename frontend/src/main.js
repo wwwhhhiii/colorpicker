@@ -2,15 +2,16 @@ import './style.css';
 
 import {LoadColorsFile} from "../wailsjs/go/main/App";
 import { 
-    createColorGroup
+    createColorGroup,
 } from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
 const APP_SOURCE_CSS = 'style.css';
 
-let appElement = document.querySelector('#app');
-let imagePlaceholderElem = null;
+var appElement = document.querySelector('#app');
+var screenshotViewContainer = null;
 
+// reload user-editable html and css
 window.reloadDynDocs = async function() {
     await fetch(APP_SOURCE_HTML)
     .then(response => async function () {
@@ -61,7 +62,7 @@ window.openFileDialog = function () {
                     return;
                 }
                 result.forEach(group => {
-                    let res = createColorGroup(group, imagePlaceholderElem);
+                    let res = createColorGroup(group, screenshotViewContainer);
                     groupsContiner.appendChild(res.containerElem);
                 });
             })
@@ -95,7 +96,13 @@ function initColorGroups() {
     await window.reloadDynDocs();
     initUpperContainer();
     initColorGroups();
-    imagePlaceholderElem = document.getElementById("__clipboard-img-dest");
+    screenshotViewContainer = document.getElementById("__screenshot-view-container");
+    if (screenshotViewContainer === null) {
+        throw new Error("'__screenshot-view-container' element not found");
+    }
+    // imageViewElem = document.getElementById("__clipboard-img");
+    // imageContainerElem = configureImageContainer(
+    //     document.getElementById("__screenshot-container"), imageViewElem);
 } )();
 
 
