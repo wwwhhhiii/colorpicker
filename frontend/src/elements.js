@@ -74,7 +74,7 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
     colorElement._imgContainerElement = null;
     colorElement._imgElement = null;
 
-    async function pasteImage() {
+    colorElement.onpaste = async function () {
         if (_selectedColorElement === null) {
             window.alert("select color line before paste");
             return;
@@ -112,11 +112,8 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
             window.alert(error);
         }
     };
-    // TODO try to refactor with 'onpaste'
-    colorElement.addEventListener("paste", pasteImage);
 
-    // TODO try to refactor with 'onclick'
-    colorElement.addEventListener("click", (event) => {
+    colorElement.onclick = function (e) {
         if (_selectedColorElement !== null) {
             _selectedColorElement.style.backgroundColor = '';
         }
@@ -130,12 +127,11 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
                 screenshotViewContainer.appendChild(clickedColorElement._imgContainerElement);
             }
         }
-
         _selectedColorElement = clickedColorElement;
         _selectedColorElement.style.backgroundColor = '#f003fc';
         let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
         oldDesc.replaceWith(clickedColorElement.colorDescription);
-    });
+    };
 
     return colorElement;
 }
