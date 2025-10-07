@@ -10,6 +10,7 @@ const APP_SOURCE_CSS = 'style.css';
 
 var appElement = document.querySelector('#app');
 var screenshotViewContainer = null;
+var descContainer = null;
 
 // reload user-editable html and css
 window.reloadDynDocs = async function() {
@@ -62,7 +63,7 @@ window.openFileDialog = function () {
                     return;
                 }
                 result.forEach(group => {
-                    let res = createColorGroup(group, screenshotViewContainer);
+                    let res = createColorGroup(group, screenshotViewContainer, descContainer);
                     groupsContiner.appendChild(res.containerElem);
                 });
             })
@@ -87,8 +88,12 @@ window.saveFile = stub;
 (async function () {
     await window.reloadDynDocs();
     screenshotViewContainer = document.getElementById("__screenshot-view-container");
+    descContainer = document.getElementById("__desc-container");
     if (screenshotViewContainer === null) {
         throw new Error("'__screenshot-view-container' element not found");
+    }
+    if (descContainer === null) {
+        throw new Error("'__desc-container' element not found");
     }
 } )();
 

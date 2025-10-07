@@ -2,22 +2,30 @@ var _selectedColorElement = null;
 
 // screenshot, description, etc.
 class ColorView {
-    constructor(screenshotURL) {
+    constructor() {
         this._imgContainer = document.createElement("div");
         this._imgContainer.className = "screenshot-container";
         this._imgElement = document.createElement("img");
         this._imgElement.className = "clipboard-img";
-        this._imgElement.src = screenshotURL;
-
+        this._imgElement.src = "";
         this._imgContainer.appendChild(this._imgElement);
         this._configureImageContainer(this._imgContainer);
+
+        this._colorTextArea = document.createElement("textarea");
+        this._colorTextArea.style.resize = 'none';
+        this._colorTextArea.className = "color-textarea";
+        this._colorTextArea.id = window.crypto.randomUUID();
     }
 
     getImgContainer() {
         return this._imgContainer;
     }
 
-    updateImgSrc(newSrc) {
+    getColorTextarea() {
+        return this._colorTextArea;
+    }
+
+    setImgSrc(newSrc) {
         this._imgElement.src = newSrc;
     }
 
@@ -69,7 +77,7 @@ class ColorView {
 }
 
 // color element, i.e. color line
-function createColorElement(name, screenshotViewContainer, r, g, b) {
+function createColorElement(name, screenshotViewContainer, descContainer, r, g, b) {
     let colorElement = document.createElement("li");
     colorElement.className = "color-element";
     colorElement.textContent = name;
@@ -87,10 +95,6 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
     });
 
     // each color in a color group has its own description
-    let colorTextarea = document.createElement("textarea");
-    colorTextarea.style.resize = 'none';
-    colorTextarea.className = "__replacable-color-desc";
-    colorElement.colorDescription = colorTextarea;
     colorElement.colorView = null;
 
     colorElement.onpaste = async function () {
@@ -105,38 +109,27 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
                     throw new Error("clipboard does not contain image");
                 }
                 let blob = await item.getType("image/png");
-                let screenshotURL = URL.createObjectURL(blob);
-                if (colorElement.colorView === null) {
-                    colorElement.colorView = new ColorView(screenshotURL);
-                    screenshotViewContainer.appendChild(colorElement.colorView.getImgContainer());
-                } else {
-                    colorElement.colorView.updateImgSrc(screenshotURL);
-                }
+                colorElement.colorView.setImgSrc(URL.createObjectURL(blob));
             }
         } catch (error) {
             console.log(error);
             window.alert(error);
         }
     };
-
     colorElement.onclick = function (e) {
+        if (colorElement.colorView === null) {
+            colorElement.colorView = new ColorView();
+        }
         if (_selectedColorElement !== null) {
             _selectedColorElement.style.backgroundColor = '';
+            screenshotViewContainer.removeChild(_selectedColorElement.colorView.getImgContainer());
+            descContainer.removeChild(_selectedColorElement.colorView.getColorTextarea());
         }
-        let clickedColorElement = colorElement;
+        screenshotViewContainer.appendChild(colorElement.colorView.getImgContainer());
+        descContainer.appendChild(colorElement.colorView.getColorTextarea());
 
-        if (_selectedColorElement !== null) {
-            if (_selectedColorElement.colorView !== null) {
-                screenshotViewContainer.removeChild(_selectedColorElement.colorView.getImgContainer());
-            }
-            if (clickedColorElement.colorView !== null) {
-                screenshotViewContainer.appendChild(clickedColorElement.colorView.getImgContainer());
-            }
-        }
-        _selectedColorElement = clickedColorElement;
+        _selectedColorElement = colorElement;
         _selectedColorElement.style.backgroundColor = '#f003fc';
-        let oldDesc = document.getElementsByClassName("__replacable-color-desc")[0];
-        oldDesc.replaceWith(clickedColorElement.colorDescription);
     };
 
     return colorElement;
@@ -189,7 +182,7 @@ function createColorGroupLabel(colorGroupElem) {
     return label;
 }
 
-export function createColorGroup(group, screenshotViewContainer) {
+export function createColorGroup(group, screenshotViewContainer, descContainer) {
     let menu = document.createElement("menu");
     menu.id = group.name;  // TODO should be unique
     menu.name = group.name;
@@ -205,6 +198,7 @@ export function createColorGroup(group, screenshotViewContainer) {
         menu.appendChild(createColorElement(
             "test color name",
             screenshotViewContainer,
+            descContainer,
             color.rgb[0],
             color.rgb[1],
             color.rgb[2],
