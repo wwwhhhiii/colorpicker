@@ -84,25 +84,12 @@ let stub = function () { window.alert("button is not ready"); };
 window.saveFileAs = stub;
 window.saveFile = stub;
 
-function initUpperContainer() {
-    
-}
-
-function initColorGroups() {
-
-}
-
 (async function () {
     await window.reloadDynDocs();
-    initUpperContainer();
-    initColorGroups();
     screenshotViewContainer = document.getElementById("__screenshot-view-container");
     if (screenshotViewContainer === null) {
         throw new Error("'__screenshot-view-container' element not found");
     }
-    // imageViewElem = document.getElementById("__clipboard-img");
-    // imageContainerElem = configureImageContainer(
-    //     document.getElementById("__screenshot-container"), imageViewElem);
 } )();
 
 

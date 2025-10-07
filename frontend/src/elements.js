@@ -13,7 +13,7 @@ class ColorView {
         this._configureImageContainer(this._imgContainer);
     }
 
-    get imgContainer() {
+    getImgContainer() {
         return this._imgContainer;
     }
 
@@ -91,9 +91,6 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
     colorTextarea.style.resize = 'none';
     colorTextarea.className = "__replacable-color-desc";
     colorElement.colorDescription = colorTextarea;
-    // colorElement.colorScreenshotURL = null;
-    // colorElement._imgContainerElement = null;
-    // colorElement._imgElement = null;
     colorElement.colorView = null;
 
     colorElement.onpaste = async function () {
@@ -111,7 +108,7 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
                 let screenshotURL = URL.createObjectURL(blob);
                 if (colorElement.colorView === null) {
                     colorElement.colorView = new ColorView(screenshotURL);
-                    screenshotViewContainer.appendChild(colorElement.colorView.imgContainer);
+                    screenshotViewContainer.appendChild(colorElement.colorView.getImgContainer());
                 } else {
                     colorElement.colorView.updateImgSrc(screenshotURL);
                 }
@@ -130,10 +127,10 @@ function createColorElement(name, screenshotViewContainer, r, g, b) {
 
         if (_selectedColorElement !== null) {
             if (_selectedColorElement.colorView !== null) {
-                screenshotViewContainer.removeChild(_selectedColorElement.colorView.imgContainer);
+                screenshotViewContainer.removeChild(_selectedColorElement.colorView.getImgContainer());
             }
             if (clickedColorElement.colorView !== null) {
-                screenshotViewContainer.appendChild(clickedColorElement.colorView.imgContainer);
+                screenshotViewContainer.appendChild(clickedColorElement.colorView.getImgContainer());
             }
         }
         _selectedColorElement = clickedColorElement;
