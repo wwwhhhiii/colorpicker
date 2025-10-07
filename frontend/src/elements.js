@@ -30,46 +30,53 @@ class ColorView {
     }
 
     _configureImageContainer(containerElem) {
-            containerElem._scale = 1;
-        containerElem._isPanning = false;
-        containerElem._ptX = 0;
-        containerElem._ptY = 0;
-        containerElem._start = {x: 0, y: 0};
+        let rect = containerElem.getBoundingClientRect();
+
+        let scale = 1;
+        let scaleFactor = 1.1;
+        let isPanning = false;
+        let mousedownX = rect.left;
+        let mousedownY = rect.top;
+        let translateX = rect.left;
+        let translateY = rect.top;
 
         let stopPanning = function(e) {
-            containerElem._isPanning = false;
+            isPanning = false;
             containerElem.style.cursor = "default";
         };
         containerElem.onmousedown = function(e) {
             e.preventDefault();
-            containerElem._start.x = e.clientX - containerElem._ptX;
-            containerElem._start.y = e.clientY - containerElem._ptY;
-            containerElem._isPanning = true;
+            mousedownX = e.clientX - translateX;
+            mousedownY = e.clientY - translateY;
+            isPanning = true;
             containerElem.style.cursor = "grab";
         };
         containerElem.onmouseup = stopPanning;
         containerElem.onmouseleave = stopPanning;
         containerElem.onmousemove = function(e) {
             e.preventDefault();
-            if (!containerElem._isPanning) {
+            if (!isPanning) {
                 return;
             }
-            containerElem._ptX = e.clientX - containerElem._start.x;
-            containerElem._ptY = e.clientY - containerElem._start.y;
-            containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+            translateX = e.clientX - mousedownX;
+            translateY = e.clientY - mousedownY;
+            containerElem.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         };
         containerElem.onwheel = function(e) {
             e.preventDefault();
-            if (containerElem._isPanning) {
+            if (isPanning) {
                 return;
             }
-            let x = (e.clientX - containerElem._ptX) / containerElem._scale;
-            let y = (e.clientY - containerElem._ptY) / containerElem._scale;
-            let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
-            (delta > 0) ? (containerElem._scale *= 1.1) : (containerElem._scale /= 1.1);
-            containerElem._ptX = e.clientX - x * containerElem._scale;
-            containerElem._ptY = e.clientY - y * containerElem._scale;
-            containerElem.style.transform = `translate(${containerElem._ptX}px, ${containerElem._ptY}px) scale(${containerElem._scale})`;
+            let delta = e.deltaY > 0 ? -1 : 1;
+            let xs = (e.clientX - translateX) / scale;
+            let ys = (e.clientY - translateY) / scale;
+            let newScale = delta > 0 ? scale * scaleFactor : scale / scaleFactor;
+            if (newScale >= 0.5 && newScale <= 50) {
+                scale = newScale;
+                translateX = e.clientX - xs * scale;
+                translateY = e.clientY - ys * scale;
+                containerElem.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            }
         };
 
         return containerElem;
@@ -94,7 +101,8 @@ function createColorElement(name, screenshotViewContainer, descContainer, r, g, 
         window.alert(`you clicked ${event.target.textContent}`);
     });
 
-    // each color in a color group has its own description
+    // each сolor element has colorView,
+    // a struct containing logic for manipulation of a screenshot and its description
     colorElement.colorView = null;
 
     colorElement.onpaste = async function () {
