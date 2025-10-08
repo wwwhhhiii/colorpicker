@@ -30,15 +30,13 @@ class ColorView {
     }
 
     _configureImageContainer(containerElem) {
-        let rect = containerElem.getBoundingClientRect();
-
         let scale = 1;
         let scaleFactor = 1.1;
         let isPanning = false;
-        let mousedownX = rect.left;
-        let mousedownY = rect.top;
-        let translateX = rect.left;
-        let translateY = rect.top;
+        let mousedownX = 0;
+        let mousedownY = 0;
+        let translateX = 0;
+        let translateY = 0;
 
         let stopPanning = function(e) {
             isPanning = false;
@@ -67,10 +65,10 @@ class ColorView {
             if (isPanning) {
                 return;
             }
-            let delta = e.deltaY > 0 ? -1 : 1;
             let xs = (e.clientX - translateX) / scale;
             let ys = (e.clientY - translateY) / scale;
-            let newScale = delta > 0 ? scale * scaleFactor : scale / scaleFactor;
+            let delta = e.wheelDelta ? e.wheelDelta : -e.deltaY;
+            let newScale = (delta > 0) ? (scale * scaleFactor) : (scale / scaleFactor);
             if (newScale >= 0.5 && newScale <= 50) {
                 scale = newScale;
                 translateX = e.clientX - xs * scale;
