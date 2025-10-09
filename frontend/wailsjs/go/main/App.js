@@ -9,3 +9,7 @@ export function LoadColorsFile() {
 export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
+
+export function SaveColors(arg1) {
+  return window['go']['main']['App']['SaveColors'](arg1);
+}

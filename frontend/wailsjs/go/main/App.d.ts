@@ -5,3 +5,5 @@ import {main} from '../models';
 export function LoadColorsFile():Promise<Array<main.ColorGroup>>;
 
 export function OpenFileDialog():Promise<string>;
+
+export function SaveColors(arg1:Array<main.ColorGroup>):Promise<void>;

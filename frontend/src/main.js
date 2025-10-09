@@ -1,8 +1,9 @@
 import './style.css';
 
-import {LoadColorsFile} from "../wailsjs/go/main/App";
+import {LoadColorsFile, SaveColors} from "../wailsjs/go/main/App";
 import { 
     createColorGroup,
+    colorGroupToJson,
 } from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
@@ -81,8 +82,29 @@ window.addColorGroup = function () {
     window.alert("not ready yet")
 }
 
+window.saveFileAs = async function () {
+    try {
+        let colorGroups = document.getElementsByClassName("colors-group-menu");
+        let arr = Array.from(colorGroups).map((group) => colorGroupToJson(group));
+        SaveColors(arr)
+            .then((result) => {
+                if (result !== null) {
+                    console.error(result);
+                    window.alert(result);
+                }
+                window.alert("File saved");
+            })
+            .catch((err) => {
+                console.error(err);
+                window.alert(`critical error: ${err}`);
+            })
+    } catch (err) {
+        console.error(err);
+        window.alert(`critical error: ${err}`);
+    }
+}
+
 let stub = function () { window.alert("button is not ready"); };
-window.saveFileAs = stub;
 window.saveFile = stub;
 
 (async function () {

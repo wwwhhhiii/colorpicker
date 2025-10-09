@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -273,4 +274,89 @@ func (a *App) LoadColorsFile() ([]ColorGroup, error) {
 		return nil, err
 	}
 	return colorGroups, nil
+}
+
+func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
+	// open file block
+	_, err := w.WriteString("{\n")
+	if err != nil {
+		return err
+	}
+	_, err = w.WriteString(
+		"Name: \"Photoshop Color Values\",\nVersion: 13.0,\n",
+	)
+	if err != nil {
+		return err
+	}
+	err = w.Flush()
+	if err != nil {
+		return err
+	}
+	// open colors block
+	_, err = w.WriteString("Colors:\n\t{\n\t")
+	if err != nil {
+		return err
+	}
+	for _, group := range colors {
+		_, err = w.WriteString(fmt.Sprintf(
+			"%s:\n\t\t[\n\t\t", group.Name))
+		if err != nil {
+			return err
+		}
+		for _, color := range group.Colors {
+			r, g, b := color.Rgb[0], color.Rgb[1], color.Rgb[2]
+			_, err = w.WriteString(fmt.Sprintf(
+				"[ %d, %d, %d, %f ],\n\t\t", r, g, b, color.Alpha))
+			if err != nil {
+				return err
+			}
+		}
+		_, err = w.WriteString("],\n\n\t")
+		if err != nil {
+			return err
+		}
+		err = w.Flush()
+		if err != nil {
+			return err
+		}
+	}
+	// close colors block
+	_, err = w.WriteString("}\n")
+	if err != nil {
+		return err
+	}
+	// close file block
+	_, err = w.WriteString("}\n")
+	if err != nil {
+		return err
+	}
+	err = w.Flush()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) SaveColors(colors []ColorGroup) error {
+	saveDir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	if err != nil {
+		return err
+	}
+	if saveDir == "" {
+		return nil
+	}
+	f, err := os.Create(filepath.Join(saveDir, "colors.txt"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	err = writeColorsFile(w, colors)
+	if err != nil {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
