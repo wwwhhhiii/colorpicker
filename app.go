@@ -355,8 +355,5 @@ func (a *App) SaveColors(colors []ColorGroup) error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	return nil
 }
