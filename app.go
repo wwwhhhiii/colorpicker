@@ -306,7 +306,7 @@ func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
 		for _, color := range group.Colors {
 			r, g, b := color.Rgb[0], color.Rgb[1], color.Rgb[2]
 			_, err = w.WriteString(fmt.Sprintf(
-				"[ %d, %d, %d, %f ],\n\t\t", r, g, b, color.Alpha))
+				"[ %d, %d, %d, %.1f ],\n\t\t", r, g, b, color.Alpha))
 			if err != nil {
 				return err
 			}
