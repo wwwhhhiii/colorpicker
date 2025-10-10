@@ -65,7 +65,7 @@ window.reloadDynDocs = async function() {
     });
 };
 
-window.openFileDialog = function () {
+window.loadFile = function () {
     try {
         LoadColorsFile()
             .then((result) => {
