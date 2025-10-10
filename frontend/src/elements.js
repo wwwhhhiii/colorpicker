@@ -81,6 +81,11 @@ class ColorView {
     }
 }
 
+// clear all references to all previously loaded elements
+export function onDocsReload() {
+    _selectedColorElement = null;
+}
+
 // color element, i.e. color line
 function createColorElement(name, screenshotViewContainer, descContainer, r, g, b) {
     let colorElement = document.createElement("li");

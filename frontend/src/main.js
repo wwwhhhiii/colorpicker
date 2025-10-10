@@ -4,6 +4,7 @@ import {LoadColorsFile, SaveColors} from "../wailsjs/go/main/App";
 import { 
     createColorGroup,
     colorGroupToJson,
+    onDocsReload,
 } from './elements';
 
 const APP_SOURCE_HTML = 'test.html';
@@ -25,6 +26,15 @@ window.reloadDynDocs = async function() {
     .then(htmlContent => async function () {
         // inject .html
         appElement.innerHTML = htmlContent;
+        screenshotViewContainer = document.getElementById("__screenshot-view-container");
+        descContainer = document.getElementById("__desc-container");
+        if (screenshotViewContainer === null) {
+            throw new Error("'__screenshot-view-container' element not found");
+        }
+        if (descContainer === null) {
+            throw new Error("'__desc-container' element not found");
+        }
+        onDocsReload();
         // inject .css
         await fetch(APP_SOURCE_CSS)
         .then(response => async function () {
@@ -109,14 +119,6 @@ window.saveFile = stub;
 
 (async function () {
     await window.reloadDynDocs();
-    screenshotViewContainer = document.getElementById("__screenshot-view-container");
-    descContainer = document.getElementById("__desc-container");
-    if (screenshotViewContainer === null) {
-        throw new Error("'__screenshot-view-container' element not found");
-    }
-    if (descContainer === null) {
-        throw new Error("'__desc-container' element not found");
-    }
 } )();
 
 
