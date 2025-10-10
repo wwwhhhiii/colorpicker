@@ -95,6 +95,7 @@ function createColorElement(name, screenshotViewContainer, descContainer, r, g, 
     let bhex = b.toString(16).padStart(2, '0');
     colorInput.value = `#${rhex}${ghex}${bhex}`;
     colorElement.appendChild(colorInput);
+    colorElement.__colorInput = colorInput;
 
     colorElement.addEventListener("dblclick", (event) => {
         window.alert(`you clicked ${event.target.textContent}`);
@@ -140,28 +141,6 @@ function createColorElement(name, screenshotViewContainer, descContainer, r, g, 
     };
 
     return colorElement;
-}
-
-function colorElementToJson(colorElement) {
-    let colorInput = colorElement.querySelector(".color-input");
-    let r = parseInt(colorInput.value.substr(1, 2), 16);
-    let g = parseInt(colorInput.value.substr(3, 2), 16);
-    let b = parseInt(colorInput.value.substr(5, 2), 16);
-    return {
-        rgb: [r, g, b],
-        alpha: 1,  // TODO change when available
-    }
-}
-
-// expects color group menu
-export function colorGroupToJson(colorGroup) {
-    return {
-        name: colorGroup.name,
-        colorspace: 0, // TODO change when available, and mb change parsing based on colorspace
-        colors: Array.from(colorGroup.querySelectorAll(".color-element")).map(
-            (color) => colorElementToJson(color)
-        ),
-    }
 }
 
 function createColorGroupLabel(colorGroupElem) {
@@ -242,5 +221,26 @@ export function createColorGroup(group, screenshotViewContainer, descContainer) 
         containerElem: colorGroupContainer,
         labelElem: colorGroupLabel,
         menuElem: menu,
+    }
+}
+
+function colorElementToJson(colorElement) {
+    let colorInput = colorElement.querySelector(".color-input");
+    let r = parseInt(colorInput.value.substr(1, 2), 16);
+    let g = parseInt(colorInput.value.substr(3, 2), 16);
+    let b = parseInt(colorInput.value.substr(5, 2), 16);
+    return {
+        rgb: [r, g, b],
+        alpha: 1,  // TODO change when available
+    }
+}
+
+export function colorGroupToJson(colorGroupMenu) {
+    return {
+        name: colorGroupMenu.name,
+        colorspace: 0, // TODO change when available, and mb change parsing based on colorspace
+        colors: Array.from(colorGroupMenu.querySelectorAll(".color-element")).map(
+            (color) => colorElementToJson(color)
+        ),
     }
 }
