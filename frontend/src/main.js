@@ -7,7 +7,7 @@ import {
     onDocsReload,
 } from './elements';
 
-const APP_SOURCE_HTML = 'test.html';
+const APP_SOURCE_HTML = 'page.html';
 const APP_SOURCE_CSS = 'style.css';
 
 var appElement = document.querySelector('#app');
