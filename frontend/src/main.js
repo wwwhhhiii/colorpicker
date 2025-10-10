@@ -4,6 +4,7 @@ import {LoadColorsFile, SaveColors} from "../wailsjs/go/main/App";
 import { 
     createColorGroup,
     colorGroupToJson,
+    clearPageContent,
     onDocsReload,
 } from './elements';
 
@@ -11,6 +12,7 @@ const APP_SOURCE_HTML = 'page.html';
 const APP_SOURCE_CSS = 'style.css';
 
 var appElement = document.querySelector('#app');
+var colorGroupsContainer = null;
 var screenshotViewContainer = null;
 var descContainer = null;
 
@@ -26,11 +28,15 @@ window.reloadDynDocs = async function() {
     .then(htmlContent => async function () {
         // inject .html
         appElement.innerHTML = htmlContent;
+        colorGroupsContainer = document.getElementById("__groups-content");
+        if (colorGroupsContainer === null) {
+            throw new Error("'__groups-content' element not found");
+        }
         screenshotViewContainer = document.getElementById("__screenshot-view-container");
-        descContainer = document.getElementById("__desc-container");
         if (screenshotViewContainer === null) {
             throw new Error("'__screenshot-view-container' element not found");
         }
+        descContainer = document.getElementById("__desc-container");
         if (descContainer === null) {
             throw new Error("'__desc-container' element not found");
         }
@@ -69,13 +75,13 @@ window.loadFile = function () {
     try {
         LoadColorsFile()
             .then((result) => {
-                let groupsContiner = document.getElementById("groups-content");
                 if (result === null) {
                     return;
                 }
+                clearPageContent(colorGroupsContainer, screenshotViewContainer, descContainer);
                 result.forEach(group => {
                     let res = createColorGroup(group, screenshotViewContainer, descContainer);
-                    groupsContiner.appendChild(res.containerElem);
+                    colorGroupsContainer.appendChild(res.containerElem);
                 });
             })
             .catch((err) => {

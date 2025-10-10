@@ -86,6 +86,14 @@ export function onDocsReload() {
     _selectedColorElement = null;
 }
 
+// clears current content elements on the page
+export function clearPageContent(groupsContainer, screenshotViewContainer, descContainer) {
+    groupsContainer.replaceChildren();
+    _selectedColorElement = null;
+    screenshotViewContainer.replaceChildren();
+    descContainer.replaceChildren();
+}
+
 // color element, i.e. color line
 function createColorElement(name, screenshotViewContainer, descContainer, r, g, b) {
     let colorElement = document.createElement("li");
@@ -125,7 +133,7 @@ function createColorElement(name, screenshotViewContainer, descContainer, r, g, 
                 colorElement.colorView.setImgSrc(URL.createObjectURL(blob));
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
             window.alert(error);
         }
     };
