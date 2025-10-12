@@ -242,9 +242,14 @@ function colorElementToJson(colorElement) {
     let r = parseInt(colorInput.value.substr(1, 2), 16);
     let g = parseInt(colorInput.value.substr(3, 2), 16);
     let b = parseInt(colorInput.value.substr(5, 2), 16);
+    let colorDescr = "";
+    if (colorElement.colorView !== null) {
+        colorDescr = colorElement.colorView.getColorTextarea().value;
+    }
     return {
         rgb: [r, g, b],
         alpha: 1,  // TODO change when available
+        description: colorDescr,
     }
 }
 

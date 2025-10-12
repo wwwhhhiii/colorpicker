@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,11 @@ import (
 	"unicode"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+)
+
+const (
+	COLORS_FILE_VER      = "13.0"
+	COLORS_META_FILE_VER = "1.0"
 )
 
 // App struct
@@ -43,14 +49,16 @@ func (a *App) OpenFileDialog() (string, error) {
 }
 
 type Color struct {
-	Rgb   [3]uint8 `json:"rgb"`
-	Alpha float32  `json:"alpha"`
+	Rgb         [3]uint8 `json:"rgb"`
+	Alpha       float32  `json:"alpha"`
+	Description string   `json:"description"`
 }
 
-func NewColor(rgb [3]uint8, alpha float32) *Color {
+func NewColor(rgb [3]uint8, alpha float32, descr string) *Color {
 	return &Color{
-		Rgb:   rgb,
-		Alpha: alpha,
+		Rgb:         rgb,
+		Alpha:       alpha,
+		Description: descr,
 	}
 }
 
@@ -71,6 +79,54 @@ func NewColorGroup(name string, colorspace int, colors []*Color) *ColorGroup {
 		Name:       name,
 		Colorspace: colorspace,
 		Colors:     colors,
+	}
+}
+
+// photoshop file json layout reflected as go struct
+type ColorsFile struct {
+	Name    string                `json:"Name"`
+	Version string                `json:"Version"`
+	Colors  map[string][][4]uint8 `json:"Colors"`
+}
+
+func NewColorsFile(colors []ColorGroup) *ColorsFile {
+	colorsMap := make(map[string][][4]uint8, len(colors))
+	for _, colorGroup := range colors {
+		colorsArr := make([][4]uint8, 0, 4)
+		for _, color := range colorGroup.Colors {
+			rgba := [4]uint8{color.Rgb[0], color.Rgb[1], color.Rgb[2], uint8(color.Alpha)}
+			colorsArr = append(colorsArr, rgba)
+		}
+		colorsMap[colorGroup.Name] = colorsArr
+	}
+	return &ColorsFile{
+		Name:    "Photoshop Color Values",
+		Version: COLORS_FILE_VER,
+		Colors:  colorsMap,
+	}
+}
+
+type ColorsMetaFile struct {
+	Name        string              `json:"Name"`
+	Version     string              `json:"Version"`
+	Description map[string][]string `json:"Description"`
+}
+
+func newColorsMetaFile(colors []ColorGroup) *ColorsMetaFile {
+	colorsDescMap := make(map[string][]string, len(colors))
+	for _, colorGroup := range colors {
+		colorsDescArr := make([]string, 0, len(colorGroup.Colors))
+		for _, color := range colorGroup.Colors {
+			if color.Description != "" {
+				colorsDescArr = append(colorsDescArr, color.Description)
+			}
+		}
+		colorsDescMap[colorGroup.Name] = colorsDescArr
+	}
+	return &ColorsMetaFile{
+		Name:        "Colors metadata",
+		Version:     COLORS_META_FILE_VER,
+		Description: colorsDescMap,
 	}
 }
 
@@ -109,7 +165,8 @@ func parseColor(colorRunes []rune) (*Color, error) {
 			alpha = *f
 		}
 	}
-	return NewColor(rgb, alpha), nil
+	// TODO add description instead of empty string
+	return NewColor(rgb, alpha, ""), nil
 }
 
 // expects
@@ -337,7 +394,32 @@ func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
 	return nil
 }
 
+func writeColorsFileJson(file *os.File, colors []ColorGroup) error {
+	jsonData, err := json.Marshal(NewColorsFile(colors))
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(jsonData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeColorsMetaFileJson(file *os.File, colors []ColorGroup) error {
+	jsonData, err := json.MarshalIndent(newColorsMetaFile(colors), "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(jsonData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (a *App) SaveColors(colors []ColorGroup) error {
+	filename := "colors"
 	saveDir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
 		return err
@@ -345,13 +427,24 @@ func (a *App) SaveColors(colors []ColorGroup) error {
 	if saveDir == "" {
 		return nil
 	}
-	f, err := os.Create(filepath.Join(saveDir, "colors.txt"))
+	// write photoshop colors file
+	f, err := os.Create(filepath.Join(saveDir, fmt.Sprintf("%s.txt", filename)))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	err = writeColorsFile(w, colors)
+	if err != nil {
+		return err
+	}
+	// write colors description file
+	f, err = os.Create((filepath.Join(saveDir, fmt.Sprintf("%s.meta.txt", filename))))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	err = writeColorsMetaFileJson(f, colors)
 	if err != nil {
 		return err
 	}

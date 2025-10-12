@@ -3,6 +3,7 @@ export namespace main {
 	export class Color {
 	    rgb: number[];
 	    alpha: number;
+	    description: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Color(source);
@@ -12,6 +13,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.rgb = source["rgb"];
 	        this.alpha = source["alpha"];
+	        this.description = source["description"];
 	    }
 	}
 	export class ColorGroup {
