@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -419,16 +418,15 @@ func writeColorsMetaFileJson(file *os.File, colors []ColorGroup) error {
 }
 
 func (a *App) SaveColors(colors []ColorGroup) error {
-	filename := "colors"
-	saveDir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
 	if err != nil {
 		return err
 	}
-	if saveDir == "" {
+	if filename == "" {
 		return nil
 	}
 	// write photoshop colors file
-	f, err := os.Create(filepath.Join(saveDir, fmt.Sprintf("%s.txt", filename)))
+	f, err := os.Create(fmt.Sprintf("%s.txt", filename))
 	if err != nil {
 		return err
 	}
@@ -439,7 +437,7 @@ func (a *App) SaveColors(colors []ColorGroup) error {
 		return err
 	}
 	// write colors description file
-	f, err = os.Create((filepath.Join(saveDir, fmt.Sprintf("%s.meta.txt", filename))))
+	f, err = os.Create(fmt.Sprintf("%s.meta.txt", filename))
 	if err != nil {
 		return err
 	}
