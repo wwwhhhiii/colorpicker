@@ -2,10 +2,9 @@ import './style.css';
 
 import {LoadColorsFile, SaveColors, ColorsBackupRestore} from "../wailsjs/go/main/App";
 import { 
-    createColorGroup,
-    colorGroupToJson,
-    clearPageContent,
+    ColorGroup,
     onDocsReload,
+    onFileReload,
     restoreColors,
 } from './elements';
 
@@ -14,7 +13,6 @@ const APP_SOURCE_CSS = 'style.css';
 
 var appElement = document.querySelector('#app');
 var colorGroupsContainer = null;
-const colorsGroupMap = new Map();
 var screenshotViewContainer = null;
 var descContainer = null;
 
@@ -34,7 +32,6 @@ window.reloadDynDocs = async function() {
         if (colorGroupsContainer === null) {
             throw new Error("'__groups-content' element not found");
         }
-        colorGroupsContainer.colorsGroupMap = colorsGroupMap;
         screenshotViewContainer = document.getElementById("__screenshot-view-container");
         if (screenshotViewContainer === null) {
             throw new Error("'__screenshot-view-container' element not found");
@@ -77,15 +74,19 @@ window.reloadDynDocs = async function() {
 window.loadFile = function () {
     try {
         LoadColorsFile()
-            .then((result) => {
-                if (result === null) {
+            .then((colorGroupsGO) => {
+                if (colorGroupsGO === null) {
                     return;
                 }
-                clearPageContent(colorGroupsContainer, screenshotViewContainer, descContainer);
-                result.forEach(group => {
-                    let res = createColorGroup(group, screenshotViewContainer, descContainer);
-                    colorGroupsContainer.appendChild(res.colorGroupElem);
-                    colorGroupsContainer.colorsGroupMap.set(group.name, res.colorGroupElem);
+                if (colorGroupsContainer.colorGroups !== undefined) {
+                    colorGroupsContainer.colorGroups.forEach(cg => { cg.delete() });
+                }
+                onFileReload();
+                colorGroupsContainer.colorGroups = new Array();
+                colorGroupsGO.forEach(group => {
+                    let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
+                    colorGroupsContainer.colorGroups.push(cg);
+                    colorGroupsContainer.appendChild(cg.getHtmlElement());
                 });
             })
             .catch((err) => {
@@ -104,8 +105,7 @@ window.addColorGroup = function () {
 
 window.saveFileAs = async function () {
     try {
-        let colorGroups = document.getElementsByClassName("colors-group-menu");
-        let arr = Array.from(colorGroups).map((group) => colorGroupToJson(group));
+        let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
         SaveColors(arr)
             .then((result) => {
                 if (result !== null) {
@@ -127,11 +127,11 @@ window.saveFileAs = async function () {
 window.restoreColors = function() {
     try {
         ColorsBackupRestore()
-        .then((result) => {
-            if (result === null) {
+        .then((origColorGroups) => {
+            if (origColorGroups === null) {
                 return
             }
-            restoreColors(colorGroupsContainer, result);
+            restoreColors(colorGroupsContainer, origColorGroups);
         })
         .catch((err) => {
             console.error(err);

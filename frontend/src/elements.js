@@ -17,6 +17,12 @@ class ColorView {
         this._colorTextArea.id = window.crypto.randomUUID();
     }
 
+    delete() {
+        this._imgElement.remove();
+        this._imgContainer.remove();
+        this._colorTextArea.remove();
+    }
+
     getImgContainer() {
         return this._imgContainer;
     }
@@ -81,28 +87,211 @@ class ColorView {
     }
 }
 
-// class ColorGroup {
-//     constructor() {
-//         this._group
-//     }
+class ColorElement {
+    constructor(colorGO, screenshotViewContainer, descrContainer) {
+        this._colorView = new ColorView();
+        this._screenshotViewContainer = screenshotViewContainer;
+        this._descrContainer = descrContainer;
 
-//     getGroupContaier
-// }
+        let id = window.crypto.randomUUID();
+        this.id = id
+
+        this._element = document.createElement("li");
+        this._element.id = id;
+        this._element.className = "color-element";
+        this._element.textContent = "test"; // TODO
+        this._colorInput = document.createElement("input");
+        this._colorInput.type = "color";
+        this._colorInput.className = "color-input";
+        this._colorInput.value = rgbToHexStr(
+            colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2],
+        )
+        this._element.appendChild(this._colorInput);
+        this._element.addEventListener('dblclick', () => {
+            window.alert(`you clicked ${e.target.textContent}`);
+        })
+        this._element.addEventListener('paste', async () => {
+            if (_selectedColorElement === null) {
+                window.alert("select color line before paste");
+                return;
+            }
+            try {
+                let clipboardContent = await navigator.clipboard.read();
+                for (let item of clipboardContent) {
+                    if (!item.types.includes("image/png")) {
+                        throw new Error("clipboard does not contain image");
+                    }
+                    let blob = await item.getType("image/png");
+                    this._colorView.setImgSrc(URL.createObjectURL(blob));
+                }
+            } catch (error) {
+                console.error(error);
+                window.alert(error);
+            }
+        })
+        this._element.addEventListener('click', () => {
+            if (_selectedColorElement !== null) {
+                _selectedColorElement._element.style.backgroundColor = '';
+                screenshotViewContainer.removeChild(
+                    _selectedColorElement._colorView.getImgContainer());
+                    descrContainer.removeChild(_selectedColorElement._colorView.getColorTextarea());
+            }
+            screenshotViewContainer.appendChild(this._colorView.getImgContainer());
+            descrContainer.appendChild(this._colorView.getColorTextarea());
+    
+            _selectedColorElement = this;
+            _selectedColorElement._element.style.backgroundColor = '#f003fc';
+        })
+    }
+
+    delete() {
+        this._colorView.delete();
+    }
+
+    getHtmlElement() {
+        return this._element;
+    }
+
+    getColorInput() {
+        return this._colorInput;
+    }
+
+    getColorView() {
+        return this._colorView;
+    }
+
+    toJSON() {
+        let res = hexStrToRGB(this._colorInput.value)
+        return {
+            rgb: [res.r, res.g, res.b],
+            alpha: 1,  // TODO change it
+            description: this._colorView.getColorTextarea().value,
+        }
+    }
+}
+
+export class ColorGroup {
+    constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
+        this._name = colorGroupGO.name;
+        // uuid string to ColorElement
+        this._colorElements = new Map();
+
+        this._groupContainer = document.createElement("div");
+        this._groupContainer.className = "color-group-container";
+        this._groupContainer.name =  this._name;
+
+        this._groupMenu = document.createElement("menu");
+        this._groupMenu.id =  this._name;
+        this._groupMenu.name =  this._name;
+        this._groupMenu.className = "colors-group-menu";
+        this._groupMenu.elemsHidden = false;
+
+        this._groupLabel = this._createLabel(this._groupMenu);
+        this._groupContainer.appendChild(this._groupLabel);
+        this._groupContainer.appendChild(this._groupMenu);
+
+        colorGroupGO.colors.forEach(colorGO => {
+            this.addColorElement(
+                new ColorElement(colorGO, screenshotViewContainer, descrContainer));
+        })
+    }
+
+    delete() {
+        this.clearColorElements();
+        this._groupContainer.remove();
+    }
+
+    _createLabel(menu) {
+        let label = document.createElement("label");
+        label.className = "color-group-label";
+        label.for = menu.id;
+        label.htmlFor = menu.id;
+        label.textContent = menu.name;
+
+        // fold/unfold child elements with double click
+        label.onclick = function (e) {
+            for (let color of menu.getElementsByClassName("color-element")) {
+                color.style.display = menu.elemsHidden ? 'block' : 'none';
+            }
+            menu.elemsHidden = !menu.elemsHidden;
+            e.stopPropagation();
+        }
+
+        let renameField = document.createElement("input");
+        renameField.type = "text";
+        // rename label with doublelick
+        label.ondblclick = function (e) {
+            renameField.value = label.textContent;
+            label.replaceWith(renameField);
+            renameField.focus();
+            renameField.select();
+            e.stopPropagation();
+        }
+        renameField.onkeydown = function (e) {
+            if (e.key == "Enter") {
+                if (renameField.value !== null && renameField != "") {
+                    label.textContent = renameField.value;
+                }
+                renameField.replaceWith(label);
+                e.preventDefault();
+            }
+            if (e.key == "Escape") {
+                renameField.replaceWith(label);
+                e.preventDefault();
+            }
+        }
+
+        return label
+    }
+
+    getHtmlElement() {
+        return this._groupContainer;
+    }
+
+    addColorElement(elementObj) {
+        if (elementObj.id === undefined || elementObj.id === null) {
+            throw new Error(`can't add color element, element ${elementObj} has no id`)
+        }
+        this._colorElements.set(elementObj.id, elementObj);
+        this._groupMenu.appendChild(elementObj.getHtmlElement());
+    }
+
+    removeColorElement(elementObj) {
+        if (elementObj.id === undefined || elementObj.id === null) {
+            throw new Error(`can't add color element, element ${elementObj} has no id`)
+        }
+        this._colorElements.delete(elementObj.id);
+        this._groupMenu.removeChild(elementObj.getHtmlElement());
+    }
+
+    clearColorElements() {
+        for (let [_, elem] of this._colorElements) {
+            elem.delete();
+        }
+        this._colorElements.clear();
+        this._groupMenu.replaceChildren();
+    }
+
+    toJSON() {
+        let elemsarr = new Array();
+        for (let [_, elem] of this._colorElements) {
+            elemsarr.push(elem.toJSON());
+        }
+        return {
+            name: this._name,
+            colrspace: 0,  // TODO change it
+            colors: elemsarr,
+        }
+    }
+}
 
 // clear all references to all previously loaded elements
 export function onDocsReload() {
     _selectedColorElement = null;
 }
 
-// clears current content elements on the page
-export function clearPageContent(groupsContainer, screenshotViewContainer, descContainer) {
-    groupsContainer.replaceChildren();
-    if (groupsContainer.colorsGroupMap !== undefined) {
-        groupsContainer.colorsGroupMap.clear();
-    } 
+export function onFileReload() {
     _selectedColorElement = null;
-    screenshotViewContainer.replaceChildren();
-    descContainer.replaceChildren();
 }
 
 function rgbToHexStr(r, g, b) {
@@ -110,6 +299,14 @@ function rgbToHexStr(r, g, b) {
     let ghex = g.toString(16).padStart(2, '0');
     let bhex = b.toString(16).padStart(2, '0');
     return `#${rhex}${ghex}${bhex}`
+}
+
+function hexStrToRGB(hexstr) {
+    return {
+        r: parseInt(hexstr.substr(1, 2), 16),
+        g: parseInt(hexstr.substr(3, 2), 16),
+        b: parseInt(hexstr.substr(5, 2), 16),
+    }
 }
 
 export function restoreColors(colorsGroupContainer, origColorGroups) {
@@ -125,173 +322,4 @@ export function restoreColors(colorsGroupContainer, origColorGroups) {
             )
         }
     })
-}
-
-// color element, i.e. color line
-function createColorElement(name, screenshotViewContainer, descContainer, r, g, b) {
-    let colorElement = document.createElement("li");
-    colorElement.className = "color-element";
-    colorElement.textContent = name;
-
-    let colorInput = document.createElement("input");
-    colorInput.className = "color-input";
-    colorInput.type = "color";
-    colorInput.value = rgbToHexStr(r, g, b);
-    colorElement.appendChild(colorInput);
-    colorElement.__colorInput = colorInput;
-
-    colorElement.addEventListener("dblclick", (event) => {
-        window.alert(`you clicked ${event.target.textContent}`);
-    });
-
-    // each сolor element has colorView,
-    // a struct containing logic for manipulation of a screenshot and its description
-    colorElement.colorView = null;
-
-    colorElement.onpaste = async function () {
-        if (_selectedColorElement === null) {
-            window.alert("select color line before paste");
-            return;
-        }
-        try {
-            let clipboardContent = await navigator.clipboard.read();
-            for (let item of clipboardContent) {
-                if (!item.types.includes("image/png")) {
-                    throw new Error("clipboard does not contain image");
-                }
-                let blob = await item.getType("image/png");
-                colorElement.colorView.setImgSrc(URL.createObjectURL(blob));
-            }
-        } catch (error) {
-            console.error(error);
-            window.alert(error);
-        }
-    };
-    colorElement.onclick = function (e) {
-        if (colorElement.colorView === null) {
-            colorElement.colorView = new ColorView();
-        }
-        if (_selectedColorElement !== null) {
-            _selectedColorElement.style.backgroundColor = '';
-            screenshotViewContainer.removeChild(_selectedColorElement.colorView.getImgContainer());
-            descContainer.removeChild(_selectedColorElement.colorView.getColorTextarea());
-        }
-        screenshotViewContainer.appendChild(colorElement.colorView.getImgContainer());
-        descContainer.appendChild(colorElement.colorView.getColorTextarea());
-
-        _selectedColorElement = colorElement;
-        _selectedColorElement.style.backgroundColor = '#f003fc';
-    };
-
-    return colorElement;
-}
-
-function createColorGroupLabel(colorGroupElem) {
-    let label = document.createElement("label");
-    label.classNme = "color-group-label";
-    label.for = colorGroupElem.id;
-    label.htmlFor = colorGroupElem.id;
-    label.textContent = colorGroupElem.name;
-
-    // fold/unfold child elements with double click
-    label.addEventListener("click", (event) => {
-        let labelColorGroup = document.getElementById(event.target.htmlFor);
-        let groupColors = labelColorGroup.getElementsByClassName("color-element");
-        for (let color of groupColors) {
-            color.style.display = labelColorGroup.elemsHidden ? 'block' : 'none';
-        }
-        labelColorGroup.elemsHidden = !labelColorGroup.elemsHidden;
-        event.stopPropagation();
-    });
-
-    let renameField = document.createElement("input");
-    renameField.type = "text";
-
-    // rename label with doublelick
-    label.addEventListener("dblclick", (event) => {
-        renameField.value = label.textContent;
-        label.replaceWith(renameField);
-        renameField.focus();
-        renameField.select();
-
-        event.stopPropagation();
-    });
-    renameField.addEventListener("keydown", (event) => {
-        if (event.key == "Enter") {
-            if (renameField.value !== null && renameField != "") {
-                label.textContent = renameField.value;
-            }
-            renameField.replaceWith(label);
-            event.preventDefault();
-        }
-        if (event.key == "Escape") {
-            renameField.replaceWith(label);
-            event.preventDefault();
-        }
-    });
-
-    return label;
-}
-
-export function createColorGroup(group, screenshotViewContainer, descContainer) {
-    let menu = document.createElement("menu");
-    menu.id = group.name;  // TODO should be unique
-    menu.name = group.name;
-    menu.className = "colors-group-menu";
-    menu.elemsHidden = false;
-
-    let colorGroupContainer = document.createElement("div");
-    colorGroupContainer.className = "color-group-container";
-    colorGroupContainer.id = window.crypto.randomUUID();
-    colorGroupContainer.colors = group.colors;
-    colorGroupContainer.__colorElems = new Array();
-    let colorGroupLabel = createColorGroupLabel(menu);
-
-    group.colors.forEach(color => {
-        let colorElement = createColorElement(
-            "test color name",
-            screenshotViewContainer,
-            descContainer,
-            color.rgb[0],
-            color.rgb[1],
-            color.rgb[2],
-        );
-        menu.appendChild(colorElement);
-        colorGroupContainer.__colorElems.push(colorElement);
-    });
-
-    colorGroupContainer.appendChild(colorGroupLabel);
-    colorGroupContainer.appendChild(menu);
-    
-    return {
-        colorGroupElem: colorGroupContainer,
-        labelElem: colorGroupLabel,
-        menuElem: menu,
-    }
-}
-
-function colorElementToJson(colorElement) {
-    let colorInput = colorElement.querySelector(".color-input");
-    let r = parseInt(colorInput.value.substr(1, 2), 16);
-    let g = parseInt(colorInput.value.substr(3, 2), 16);
-    let b = parseInt(colorInput.value.substr(5, 2), 16);
-    let colorDescr = "";
-    if (colorElement.colorView !== null) {
-        colorDescr = colorElement.colorView.getColorTextarea().value;
-    }
-    return {
-        rgb: [r, g, b],
-        alpha: 1,  // TODO change when available
-        description: colorDescr,
-    }
-}
-
-export function colorGroupToJson(colorGroupMenu) {
-    return {
-        name: colorGroupMenu.name,
-        colorspace: 0, // TODO change when available, and mb change parsing based on colorspace
-        colors: Array.from(colorGroupMenu.querySelectorAll(".color-element")).map(
-            (color) => colorElementToJson(color)
-        ),
-    }
 }
