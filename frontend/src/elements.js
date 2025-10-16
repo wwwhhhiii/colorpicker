@@ -81,6 +81,14 @@ class ColorView {
     }
 }
 
+// class ColorGroup {
+//     constructor() {
+//         this._group
+//     }
+
+//     getGroupContaier
+// }
+
 // clear all references to all previously loaded elements
 export function onDocsReload() {
     _selectedColorElement = null;
@@ -89,9 +97,34 @@ export function onDocsReload() {
 // clears current content elements on the page
 export function clearPageContent(groupsContainer, screenshotViewContainer, descContainer) {
     groupsContainer.replaceChildren();
+    if (groupsContainer.colorsGroupMap !== undefined) {
+        groupsContainer.colorsGroupMap.clear();
+    } 
     _selectedColorElement = null;
     screenshotViewContainer.replaceChildren();
     descContainer.replaceChildren();
+}
+
+function rgbToHexStr(r, g, b) {
+    let rhex = r.toString(16).padStart(2, '0');
+    let ghex = g.toString(16).padStart(2, '0');
+    let bhex = b.toString(16).padStart(2, '0');
+    return `#${rhex}${ghex}${bhex}`
+}
+
+export function restoreColors(colorsGroupContainer, origColorGroups) {
+    origColorGroups.forEach(origGroup => {
+        let cg = colorsGroupContainer.colorsGroupMap.get(origGroup.name);
+        if (cg === null) { return };
+        for (let i = 0; i < origGroup.colors.length; i++) {
+            let origColor = origGroup.colors[i];
+            cg.__colorElems[i].__colorInput.value = rgbToHexStr(
+                origColor.rgb[0],
+                origColor.rgb[1],
+                origColor.rgb[2],
+            )
+        }
+    })
 }
 
 // color element, i.e. color line
@@ -103,10 +136,7 @@ function createColorElement(name, screenshotViewContainer, descContainer, r, g, 
     let colorInput = document.createElement("input");
     colorInput.className = "color-input";
     colorInput.type = "color";
-    let rhex = r.toString(16).padStart(2, '0');
-    let ghex = g.toString(16).padStart(2, '0');
-    let bhex = b.toString(16).padStart(2, '0');
-    colorInput.value = `#${rhex}${ghex}${bhex}`;
+    colorInput.value = rgbToHexStr(r, g, b);
     colorElement.appendChild(colorInput);
     colorElement.__colorInput = colorInput;
 
@@ -214,24 +244,27 @@ export function createColorGroup(group, screenshotViewContainer, descContainer) 
     colorGroupContainer.className = "color-group-container";
     colorGroupContainer.id = window.crypto.randomUUID();
     colorGroupContainer.colors = group.colors;
+    colorGroupContainer.__colorElems = new Array();
     let colorGroupLabel = createColorGroupLabel(menu);
 
     group.colors.forEach(color => {
-        menu.appendChild(createColorElement(
+        let colorElement = createColorElement(
             "test color name",
             screenshotViewContainer,
             descContainer,
             color.rgb[0],
             color.rgb[1],
             color.rgb[2],
-        ));
+        );
+        menu.appendChild(colorElement);
+        colorGroupContainer.__colorElems.push(colorElement);
     });
 
     colorGroupContainer.appendChild(colorGroupLabel);
     colorGroupContainer.appendChild(menu);
     
     return {
-        containerElem: colorGroupContainer,
+        colorGroupElem: colorGroupContainer,
         labelElem: colorGroupLabel,
         menuElem: menu,
     }

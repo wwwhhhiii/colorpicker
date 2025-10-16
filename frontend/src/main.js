@@ -1,11 +1,12 @@
 import './style.css';
 
-import {LoadColorsFile, SaveColors} from "../wailsjs/go/main/App";
+import {LoadColorsFile, SaveColors, ColorsBackupRestore} from "../wailsjs/go/main/App";
 import { 
     createColorGroup,
     colorGroupToJson,
     clearPageContent,
     onDocsReload,
+    restoreColors,
 } from './elements';
 
 const APP_SOURCE_HTML = 'page.html';
@@ -13,6 +14,7 @@ const APP_SOURCE_CSS = 'style.css';
 
 var appElement = document.querySelector('#app');
 var colorGroupsContainer = null;
+const colorsGroupMap = new Map();
 var screenshotViewContainer = null;
 var descContainer = null;
 
@@ -32,6 +34,7 @@ window.reloadDynDocs = async function() {
         if (colorGroupsContainer === null) {
             throw new Error("'__groups-content' element not found");
         }
+        colorGroupsContainer.colorsGroupMap = colorsGroupMap;
         screenshotViewContainer = document.getElementById("__screenshot-view-container");
         if (screenshotViewContainer === null) {
             throw new Error("'__screenshot-view-container' element not found");
@@ -81,15 +84,16 @@ window.loadFile = function () {
                 clearPageContent(colorGroupsContainer, screenshotViewContainer, descContainer);
                 result.forEach(group => {
                     let res = createColorGroup(group, screenshotViewContainer, descContainer);
-                    colorGroupsContainer.appendChild(res.containerElem);
+                    colorGroupsContainer.appendChild(res.colorGroupElem);
+                    colorGroupsContainer.colorsGroupMap.set(group.name, res.colorGroupElem);
                 });
             })
             .catch((err) => {
                 console.error(err);
-                window.alert(`critical error: ${err}`)
+                window.alert(`critical error: ${err}`);
             });
     } catch (err) {
-        window.alert(`critical error: ${err}`)
+        window.alert(`critical error: ${err}`);
         console.error(err);
     }
 };
@@ -114,6 +118,25 @@ window.saveFileAs = async function () {
                 console.error(err);
                 window.alert(`critical error: ${err}`);
             })
+    } catch (err) {
+        console.error(err);
+        window.alert(`critical error: ${err}`);
+    }
+}
+
+window.restoreColors = function() {
+    try {
+        ColorsBackupRestore()
+        .then((result) => {
+            if (result === null) {
+                return
+            }
+            restoreColors(colorGroupsContainer, result);
+        })
+        .catch((err) => {
+            console.error(err);
+            window.alert(`critical error: ${err}`);
+        })
     } catch (err) {
         console.error(err);
         window.alert(`critical error: ${err}`);

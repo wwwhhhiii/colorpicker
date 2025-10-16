@@ -21,6 +21,8 @@ const (
 	COLORS_META_FILE_VER = "1.0"
 )
 
+var bkpColorGroups []ColorGroup
+
 // App struct
 type App struct {
 	ctx context.Context
@@ -310,7 +312,7 @@ parseLoop:
 	return groups, nil
 }
 
-func createFileBackup(f *os.File) error {
+func createBackupFile(f *os.File) error {
 	bkpname := filepath.Join(
 		filepath.Dir(f.Name()),
 		fmt.Sprintf("%s.bkp", filepath.Base(f.Name())))
@@ -325,6 +327,13 @@ func createFileBackup(f *os.File) error {
 	}
 	err = out.Sync()
 	return err
+}
+
+func (a *App) ColorsBackupRestore() ([]ColorGroup, error) {
+	if bkpColorGroups == nil {
+		return bkpColorGroups, errors.New("no backup colors saved")
+	}
+	return bkpColorGroups, nil
 }
 
 // returns empty string and no error if no file was chosen
@@ -347,8 +356,14 @@ func (a *App) LoadColorsFile() ([]ColorGroup, error) {
 	if err != nil {
 		return nil, err
 	}
+	// file backup just in case
 	file.Seek(0, io.SeekStart)
-	err = createFileBackup(file)
+	err = createBackupFile(file)
+	if err != nil {
+		return colorGroups, err
+	}
+	// memory backup to restore file state before load state
+	bkpColorGroups = colorGroups
 	return colorGroups, err
 }
 
