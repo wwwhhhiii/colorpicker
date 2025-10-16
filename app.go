@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -309,6 +310,23 @@ parseLoop:
 	return groups, nil
 }
 
+func createFileBackup(f *os.File) error {
+	bkpname := filepath.Join(
+		filepath.Dir(f.Name()),
+		fmt.Sprintf("%s.bkp", filepath.Base(f.Name())))
+	out, err := os.Create(bkpname)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, f)
+	if err != nil {
+		return err
+	}
+	err = out.Sync()
+	return err
+}
+
 // returns empty string and no error if no file was chosen
 func (a *App) LoadColorsFile() ([]ColorGroup, error) {
 	selectedFile, err := a.OpenFileDialog()
@@ -329,7 +347,9 @@ func (a *App) LoadColorsFile() ([]ColorGroup, error) {
 	if err != nil {
 		return nil, err
 	}
-	return colorGroups, nil
+	file.Seek(0, io.SeekStart)
+	err = createFileBackup(file)
+	return colorGroups, err
 }
 
 func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
