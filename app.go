@@ -83,17 +83,17 @@ func NewColorGroup(name string, colorspace int, colors []*Color) *ColorGroup {
 
 // photoshop file json layout reflected as go struct
 type ColorsFile struct {
-	Name    string                `json:"Name"`
-	Version string                `json:"Version"`
-	Colors  map[string][][4]uint8 `json:"Colors"`
+	Name    string              `json:"Name"`
+	Version string              `json:"Version"`
+	Colors  map[string][][4]any `json:"Colors"`
 }
 
 func NewColorsFile(colors []ColorGroup) *ColorsFile {
-	colorsMap := make(map[string][][4]uint8, len(colors))
+	colorsMap := make(map[string][][4]any, len(colors))
 	for _, colorGroup := range colors {
-		colorsArr := make([][4]uint8, 0, 4)
+		colorsArr := make([][4]any, 0, 10)
 		for _, color := range colorGroup.Colors {
-			rgba := [4]uint8{color.Rgb[0], color.Rgb[1], color.Rgb[2], uint8(color.Alpha)}
+			rgba := [4]any{color.Rgb[0], color.Rgb[1], color.Rgb[2], color.Alpha}
 			colorsArr = append(colorsArr, rgba)
 		}
 		colorsMap[colorGroup.Name] = colorsArr
@@ -271,7 +271,7 @@ parseLoop:
 			}
 		}
 
-		// read colors
+		// read colors, i.e [[...], ...]
 		squareBrackets = 0
 		groupRunes = groupRunes[:0]
 		for {
@@ -295,15 +295,15 @@ parseLoop:
 				squareBrackets--
 				// end of colors array
 				if squareBrackets == 0 {
-					colorGroup, err := readColorsGroup(groupRunes, string(groupNameRunes))
-					if err != nil {
-						return nil, err
-					}
-					groups = append(groups, *colorGroup)
 					break
 				}
 			}
 		}
+		colorGroup, err := readColorsGroup(groupRunes, string(groupNameRunes))
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, *colorGroup)
 	}
 
 	return groups, nil
@@ -353,21 +353,27 @@ func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
 	if err != nil {
 		return err
 	}
-	for _, group := range colors {
-		_, err = w.WriteString(fmt.Sprintf(
-			"%s:\n\t\t[\n\t\t", group.Name))
+	for i, group := range colors {
+		_, err = fmt.Fprintf(w, "%s:\n\t\t[\n\t\t", group.Name)
 		if err != nil {
 			return err
 		}
-		for _, color := range group.Colors {
+		for i, color := range group.Colors {
+			delim := ","
+			if i == len(group.Colors)-1 {
+				delim = ""
+			}
 			r, g, b := color.Rgb[0], color.Rgb[1], color.Rgb[2]
-			_, err = w.WriteString(fmt.Sprintf(
-				"[ %d, %d, %d, %.1f ],\n\t\t", r, g, b, color.Alpha))
+			_, err = fmt.Fprintf(w, "[ %d, %d, %d, %.1f ]%s\n\t\t", r, g, b, color.Alpha, delim)
 			if err != nil {
 				return err
 			}
 		}
-		_, err = w.WriteString("],\n\n\t")
+		delim := ","
+		if i == len(colors)-1 {
+			delim = ""
+		}
+		_, err = fmt.Fprintf(w, "]%s\n\n\t", delim)
 		if err != nil {
 			return err
 		}
@@ -443,6 +449,15 @@ func (a *App) SaveColors(colors []ColorGroup) error {
 	}
 	defer f.Close()
 	err = writeColorsMetaFileJson(f, colors)
+	if err != nil {
+		return err
+	}
+	f, err = os.Create(fmt.Sprintf("%s.json", filename))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	err = writeColorsFileJson(f, colors)
 	if err != nil {
 		return err
 	}
