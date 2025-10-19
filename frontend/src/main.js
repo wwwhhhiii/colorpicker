@@ -1,6 +1,6 @@
 import './style.css';
 
-import {LoadColorsFile, SaveColors, ColorsBackupRestore} from "../wailsjs/go/main/App";
+import {LoadColorsFile, SaveColorsDialog, ColorsBackupRestore, SaveColorsFile} from "../wailsjs/go/main/App";
 import { 
     ColorGroup,
     onDocsReload,
@@ -15,6 +15,8 @@ var appElement = document.querySelector('#app');
 var colorGroupsContainer = null;
 var screenshotViewContainer = null;
 var descContainer = null;
+
+var _loadedColorsFile = null;
 
 // reload user-editable html and css
 window.reloadDynDocs = async function() {
@@ -41,6 +43,7 @@ window.reloadDynDocs = async function() {
             throw new Error("'__desc-container' element not found");
         }
         onDocsReload();
+        _loadedColorsFile = null;
         // inject .css
         await fetch(APP_SOURCE_CSS)
         .then(response => async function () {
@@ -74,8 +77,8 @@ window.reloadDynDocs = async function() {
 window.loadFile = function () {
     try {
         LoadColorsFile()
-            .then((colorGroupsGO) => {
-                if (colorGroupsGO === null) {
+            .then((res) => {
+                if (res.colorGroups === null) {
                     return;
                 }
                 if (colorGroupsContainer.colorGroups !== undefined) {
@@ -83,11 +86,12 @@ window.loadFile = function () {
                 }
                 onFileReload();
                 colorGroupsContainer.colorGroups = new Array();
-                colorGroupsGO.forEach(group => {
+                res.colorGroups.forEach(group => {
                     let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
                     colorGroupsContainer.colorGroups.push(cg);
                     colorGroupsContainer.appendChild(cg.getHtmlElement());
                 });
+                _loadedColorsFile = res.file;
             })
             .catch((err) => {
                 console.error(err);
@@ -117,15 +121,17 @@ window.addColorGroup = function () {
 }
 
 window.saveFileAs = async function () {
+    if (colorGroupsContainer.colorGroups === undefined) {
+        return
+    }
     try {
         let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
-        SaveColors(arr)
+        SaveColorsDialog(arr)
             .then((result) => {
                 if (result !== null) {
                     console.error(result);
                     window.alert(result);
                 }
-                window.alert("File saved");
             })
             .catch((err) => {
                 console.error(err);
@@ -137,6 +143,7 @@ window.saveFileAs = async function () {
     }
 }
 
+// TODO broken
 window.restoreColors = function() {
     try {
         ColorsBackupRestore()
@@ -156,8 +163,24 @@ window.restoreColors = function() {
     }
 }
 
-window.saveFile = function () { 
-
+window.saveFile = function () {
+    if (_loadedColorsFile === null) {
+        window.alert("no colors file loaded");
+        return
+    }
+    if (window.confirm("original file will be overwritten")) {
+        try {
+            let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
+            SaveColorsFile(_loadedColorsFile, arr)
+            .catch((err) => {
+                console.error(err);
+                window.alert(`critical error: ${err}`);
+            })
+        } catch (err) {
+            console.error(err);
+            window.alert(`critical error: ${err}`);
+        }
+    }
 };
 
 (async function () {

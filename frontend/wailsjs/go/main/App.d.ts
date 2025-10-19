@@ -4,8 +4,12 @@ import {main} from '../models';
 
 export function ColorsBackupRestore():Promise<Array<main.ColorGroup>>;
 
-export function LoadColorsFile():Promise<Array<main.ColorGroup>>;
+export function LoadColorsFile():Promise<main.ColorsFileLoadResult>;
 
 export function OpenFileDialog():Promise<string>;
 
-export function SaveColors(arg1:Array<main.ColorGroup>):Promise<void>;
+export function SaveColors(arg1:string,arg2:Array<main.ColorGroup>):Promise<void>;
+
+export function SaveColorsDialog(arg1:Array<main.ColorGroup>):Promise<void>;
+
+export function SaveColorsFile(arg1:string,arg2:Array<main.ColorGroup>):Promise<void>;

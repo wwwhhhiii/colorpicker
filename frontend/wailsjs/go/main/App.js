@@ -14,6 +14,14 @@ export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
 
-export function SaveColors(arg1) {
-  return window['go']['main']['App']['SaveColors'](arg1);
+export function SaveColors(arg1, arg2) {
+  return window['go']['main']['App']['SaveColors'](arg1, arg2);
+}
+
+export function SaveColorsDialog(arg1) {
+  return window['go']['main']['App']['SaveColorsDialog'](arg1);
+}
+
+export function SaveColorsFile(arg1, arg2) {
+  return window['go']['main']['App']['SaveColorsFile'](arg1, arg2);
 }

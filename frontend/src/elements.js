@@ -309,6 +309,7 @@ function hexStrToRGB(hexstr) {
     }
 }
 
+// TODO broken
 export function restoreColors(colorsGroupContainer, origColorGroups) {
     origColorGroups.forEach(origGroup => {
         let cg = colorsGroupContainer.colorsGroupMap.get(origGroup.name);

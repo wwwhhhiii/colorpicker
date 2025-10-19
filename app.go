@@ -329,6 +329,7 @@ func createBackupFile(f *os.File) error {
 	return err
 }
 
+// return colors saved in memory from the last loaded file
 func (a *App) ColorsBackupRestore() ([]ColorGroup, error) {
 	if bkpColorGroups == nil {
 		return bkpColorGroups, errors.New("no backup colors saved")
@@ -336,35 +337,40 @@ func (a *App) ColorsBackupRestore() ([]ColorGroup, error) {
 	return bkpColorGroups, nil
 }
 
+type ColorsFileLoadResult struct {
+	ColorGroups []ColorGroup `json:"colorGroups"`
+	LoadedFile  string       `json:"file"`
+}
+
 // returns empty string and no error if no file was chosen
-func (a *App) LoadColorsFile() ([]ColorGroup, error) {
+func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	selectedFile, err := a.OpenFileDialog()
 	if err != nil {
-		return nil, err
+		return &ColorsFileLoadResult{nil, selectedFile}, err
 	}
 	// no file chosen
 	if selectedFile == "" {
-		return nil, nil
+		return &ColorsFileLoadResult{nil, selectedFile}, nil
 	}
 	file, err := os.Open(selectedFile)
 	if err != nil {
-		return nil, err
+		return &ColorsFileLoadResult{nil, selectedFile}, err
 	}
 	defer file.Close()
 	reader := bufio.NewReader(file)
 	colorGroups, err := parseColorFile(reader)
 	if err != nil {
-		return nil, err
+		return &ColorsFileLoadResult{nil, selectedFile}, err
 	}
 	// file backup just in case
 	file.Seek(0, io.SeekStart)
 	err = createBackupFile(file)
 	if err != nil {
-		return colorGroups, err
+		return &ColorsFileLoadResult{colorGroups, selectedFile}, err
 	}
 	// memory backup to restore file state before load state
 	bkpColorGroups = colorGroups
-	return colorGroups, err
+	return &ColorsFileLoadResult{colorGroups, selectedFile}, err
 }
 
 func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
@@ -458,14 +464,17 @@ func writeColorsMetaFileJson(file *os.File, colors []ColorGroup) error {
 	return nil
 }
 
-func (a *App) SaveColors(colors []ColorGroup) error {
-	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
+func (a *App) SaveColorsFile(filename string, colors []ColorGroup) error {
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
-	if filename == "" {
-		return nil
-	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	return writeColorsFile(w, colors)
+}
+
+func (a *App) SaveColors(filename string, colors []ColorGroup) error {
 	// write photoshop colors file
 	f, err := os.Create(fmt.Sprintf("%s.txt", filename))
 	if err != nil {
@@ -497,4 +506,15 @@ func (a *App) SaveColors(colors []ColorGroup) error {
 		return err
 	}
 	return nil
+}
+
+func (a *App) SaveColorsDialog(colors []ColorGroup) error {
+	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
+	if err != nil {
+		return err
+	}
+	if filename == "" {
+		return nil
+	}
+	return a.SaveColors(filename, colors)
 }
