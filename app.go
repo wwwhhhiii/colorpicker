@@ -54,13 +54,15 @@ type Color struct {
 	Rgb         [3]uint8 `json:"rgb"`
 	Alpha       float32  `json:"alpha"`
 	Description string   `json:"description"`
+	Img         string   `json:"img"`
 }
 
-func NewColor(rgb [3]uint8, alpha float32, descr string) *Color {
+func NewColor(rgb [3]uint8, alpha float32, descr string, img string) *Color {
 	return &Color{
 		Rgb:         rgb,
 		Alpha:       alpha,
 		Description: descr,
+		Img:         img,
 	}
 }
 
@@ -112,21 +114,27 @@ type ColorsMetaFile struct {
 	Name        string              `json:"Name"`
 	Version     string              `json:"Version"`
 	Description map[string][]string `json:"Description"`
+	Images      map[string][]string `json:"Images"`
 }
 
 func newColorsMetaFile(colors []ColorGroup) *ColorsMetaFile {
 	colorsDescMap := make(map[string][]string, len(colors))
+	colorImagesMap := make(map[string][]string, len(colors))
 	for _, colorGroup := range colors {
 		colorsDescArr := make([]string, 0, len(colorGroup.Colors))
+		colorsImgArr := make([]string, 0, len(colorGroup.Colors))
 		for _, color := range colorGroup.Colors {
 			colorsDescArr = append(colorsDescArr, color.Description)
+			colorsImgArr = append(colorsImgArr, color.Img)
 		}
 		colorsDescMap[colorGroup.Name] = colorsDescArr
+		colorImagesMap[colorGroup.Name] = colorsImgArr
 	}
 	return &ColorsMetaFile{
 		Name:        "Colors metadata",
 		Version:     COLORS_META_FILE_VER,
 		Description: colorsDescMap,
+		Images:      colorImagesMap,
 	}
 }
 
@@ -166,7 +174,7 @@ func parseColor(colorRunes []rune) (*Color, error) {
 		}
 	}
 	// TODO add description instead of empty string
-	return NewColor(rgb, alpha, ""), nil
+	return NewColor(rgb, alpha, "", ""), nil
 }
 
 // expects
@@ -381,6 +389,7 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 		metafile, err := parseMetaFile(metafilename)
 		if err != nil {
 			fmt.Printf("error parsing meta file %s", metafilename)
+			return nil, err
 		}
 		for _, group := range colorGroups {
 			descArr, ok := metafile.Description[group.Name]
@@ -388,6 +397,14 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 				for i, descLine := range descArr {
 					if i <= len(group.Colors)-1 {
 						group.Colors[i].Description = descLine
+					}
+				}
+			}
+			imgArr, ok := metafile.Images[group.Name]
+			if ok {
+				for i, imgSrc := range imgArr {
+					if i <= len(group.Colors)-1 {
+						group.Colors[i].Img = imgSrc
 					}
 				}
 			}

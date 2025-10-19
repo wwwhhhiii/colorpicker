@@ -4,12 +4,12 @@ var _globColorGroups = new Map();
 
 // screenshot, description, etc.
 class ColorView {
-    constructor(description) {
+    constructor(description, imgSrc) {
         this._imgContainer = document.createElement("div");
         this._imgContainer.className = "screenshot-container";
         this._imgElement = document.createElement("img");
         this._imgElement.className = "clipboard-img";
-        this._imgElement.src = "";
+        this._imgElement.src = imgSrc;
         this._imgContainer.appendChild(this._imgElement);
         this._configureImageContainer(this._imgContainer);
 
@@ -28,6 +28,10 @@ class ColorView {
 
     getImgContainer() {
         return this._imgContainer;
+    }
+
+    getImgElement() {
+        return this._imgElement;
     }
 
     getColorTextarea() {
@@ -92,7 +96,7 @@ class ColorView {
 
 class ColorElement {
     constructor(colorGO, screenshotViewContainer, descrContainer) {
-        this._colorView = new ColorView(colorGO.description);
+        this._colorView = new ColorView(colorGO.description, colorGO.img);
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
@@ -169,6 +173,7 @@ class ColorElement {
             rgb: [res.r, res.g, res.b],
             alpha: 1,  // TODO change it
             description: this._colorView.getColorTextarea().value,
+            img: this._colorView.getImgElement().src,
         }
     }
 }

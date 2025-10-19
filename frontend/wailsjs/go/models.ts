@@ -4,6 +4,7 @@ export namespace main {
 	    rgb: number[];
 	    alpha: number;
 	    description: string;
+	    img: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Color(source);
@@ -14,6 +15,7 @@ export namespace main {
 	        this.rgb = source["rgb"];
 	        this.alpha = source["alpha"];
 	        this.description = source["description"];
+	        this.img = source["img"];
 	    }
 	}
 	export class ColorGroup {
