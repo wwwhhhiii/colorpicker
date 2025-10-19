@@ -373,12 +373,11 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	if err != nil {
 		return &ColorsFileLoadResult{nil, selectedFile}, err
 	}
-	// try loading meta file with descriptions
+	// try loading meta file if exists
 	sdir, sfile := filepath.Split(selectedFile)
 	sfile = strings.TrimSuffix(sfile, filepath.Ext(sfile))
-	metafilename := fmt.Sprintf("%s.meta.txt", filepath.Join(sdir, sfile))
+	metafilename := fmt.Sprintf("%s.meta.json", filepath.Join(sdir, sfile))
 	if _, err := os.Stat(metafilename); err == nil {
-		// metafile exists
 		metafile, err := parseMetaFile(metafilename)
 		if err != nil {
 			fmt.Printf("error parsing meta file %s", metafilename)
@@ -394,20 +393,26 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 			}
 		}
 	}
-	// file backup just in case
+	// create file backup just in case
 	file.Seek(0, io.SeekStart)
 	err = createBackupFile(file)
 	if err != nil {
 		return &ColorsFileLoadResult{colorGroups, selectedFile}, err
 	}
-	// memory backup to restore file state before load state
+	// store in-memory backup to restore original colors on demand
 	bkpColorGroups = colorGroups
 	return &ColorsFileLoadResult{colorGroups, selectedFile}, err
 }
 
-func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
+func writeColorsFile(filename string, colors []ColorGroup) error {
 	// open file block
-	_, err := w.WriteString("{\n")
+	f, err := os.Create(fmt.Sprintf("%s.txt", filename))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	_, err = w.WriteString("{\n")
 	if err != nil {
 		return err
 	}
@@ -472,69 +477,63 @@ func writeColorsFile(w *bufio.Writer, colors []ColorGroup) error {
 	return nil
 }
 
-func writeColorsFileJson(file *os.File, colors []ColorGroup) error {
+func writeColorsFileJson(filename string, colors []ColorGroup) error {
+	f, err := os.Create(fmt.Sprintf("%s.json", filename))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 	jsonData, err := json.Marshal(NewColorsFile(colors))
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(jsonData)
+	_, err = f.Write(jsonData)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeColorsMetaFileJson(file *os.File, colors []ColorGroup) error {
+func writeColorsMetaFileJson(filename string, colors []ColorGroup) error {
+	f, err := os.Create(fmt.Sprintf("%s.meta.json", filename))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 	jsonData, err := json.MarshalIndent(newColorsMetaFile(colors), "", "  ")
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(jsonData)
+	_, err = f.Write(jsonData)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// TODO overwrite meta too
-func (a *App) SaveColorsFile(filename string, colors []ColorGroup) error {
-	f, err := os.Create(filename)
+func (a *App) OverwriteColorsFiles(filename string, colors []ColorGroup) error {
+	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
+	err := writeColorsFile(filename, colors)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	return writeColorsFile(w, colors)
+	err = writeColorsMetaFileJson(filename, colors)
+	return err
 }
 
 func (a *App) SaveColors(filename string, colors []ColorGroup) error {
-	// write photoshop colors file
-	f, err := os.Create(fmt.Sprintf("%s.txt", filename))
+	// main photoshop colors file
+	err := writeColorsFile(filename, colors)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	err = writeColorsFile(w, colors)
+	// meta info: desc, screenshots path, etc.
+	err = writeColorsMetaFileJson(filename, colors)
 	if err != nil {
 		return err
 	}
-	// write colors description file
-	f, err = os.Create(fmt.Sprintf("%s.meta.txt", filename))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	err = writeColorsMetaFileJson(f, colors)
-	if err != nil {
-		return err
-	}
-	f, err = os.Create(fmt.Sprintf("%s.json", filename))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	err = writeColorsFileJson(f, colors)
+	// json format main photoshop colors file
+	err = writeColorsFileJson(filename, colors)
 	if err != nil {
 		return err
 	}

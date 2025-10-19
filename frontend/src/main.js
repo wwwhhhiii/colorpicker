@@ -1,6 +1,6 @@
 import './style.css';
 
-import {LoadColorsFile, SaveColorsDialog, ColorsBackupRestore, SaveColorsFile} from "../wailsjs/go/main/App";
+import {LoadColorsFile, SaveColorsDialog, ColorsBackupRestore, OverwriteColorsFiles} from "../wailsjs/go/main/App";
 import { 
     ColorGroup,
     onDocsReload,
@@ -167,10 +167,10 @@ window.saveFile = function () {
         window.alert("no colors file loaded");
         return
     }
-    if (window.confirm("original file will be overwritten")) {
+    if (window.confirm("original files will be overwritten")) {
         try {
             let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
-            SaveColorsFile(_loadedColorsFile, arr)
+            OverwriteColorsFiles(_loadedColorsFile, arr)
             .catch((err) => {
                 console.error(err);
                 window.alert(`critical error: ${err}`);
