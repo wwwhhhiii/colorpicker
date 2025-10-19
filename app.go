@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/labstack/gommon/log"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -119,9 +120,7 @@ func newColorsMetaFile(colors []ColorGroup) *ColorsMetaFile {
 	for _, colorGroup := range colors {
 		colorsDescArr := make([]string, 0, len(colorGroup.Colors))
 		for _, color := range colorGroup.Colors {
-			if color.Description != "" {
-				colorsDescArr = append(colorsDescArr, color.Description)
-			}
+			colorsDescArr = append(colorsDescArr, color.Description)
 		}
 		colorsDescMap[colorGroup.Name] = colorsDescArr
 	}
@@ -342,6 +341,19 @@ type ColorsFileLoadResult struct {
 	LoadedFile  string       `json:"file"`
 }
 
+func parseMetaFile(filename string) (*ColorsMetaFile, error) {
+	metafile := &ColorsMetaFile{}
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(content, metafile)
+	if err != nil {
+		return nil, err
+	}
+	return metafile, nil
+}
+
 // returns empty string and no error if no file was chosen
 func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	selectedFile, err := a.OpenFileDialog()
@@ -361,6 +373,27 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	colorGroups, err := parseColorFile(reader)
 	if err != nil {
 		return &ColorsFileLoadResult{nil, selectedFile}, err
+	}
+	// try loading meta file with descriptions
+	sdir, sfile := filepath.Split(selectedFile)
+	sfile = strings.TrimSuffix(sfile, filepath.Ext(sfile))
+	metafilename := fmt.Sprintf("%s.meta.txt", filepath.Join(sdir, sfile))
+	if _, err := os.Stat(metafilename); err == nil {
+		// metafile exists
+		metafile, err := parseMetaFile(metafilename)
+		if err != nil {
+			log.Errorf("error parsing meta file %s", metafilename)
+		}
+		for _, group := range colorGroups {
+			descArr, ok := metafile.Description[group.Name]
+			if ok {
+				for i, descLine := range descArr {
+					if i <= len(group.Colors)-1 {
+						group.Colors[i].Description = descLine
+					}
+				}
+			}
+		}
 	}
 	// file backup just in case
 	file.Seek(0, io.SeekStart)
@@ -464,6 +497,7 @@ func writeColorsMetaFileJson(file *os.File, colors []ColorGroup) error {
 	return nil
 }
 
+// TODO overwrite meta too
 func (a *App) SaveColorsFile(filename string, colors []ColorGroup) error {
 	f, err := os.Create(filename)
 	if err != nil {
