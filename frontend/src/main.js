@@ -100,7 +100,20 @@ window.loadFile = function () {
 };
 
 window.addColorGroup = function () {
-    window.alert("not ready yet")
+    if (colorGroupsContainer.colorGroups === undefined) {
+        colorGroupsContainer.colorGroups = new Array();
+    }
+    let cg = new ColorGroup(
+        {
+            name: "unnamed group",
+            colorspace: 0,
+            colors: [],
+        },
+        screenshotViewContainer,
+        descContainer
+    );
+    colorGroupsContainer.colorGroups.push(cg);
+    colorGroupsContainer.appendChild(cg.getHtmlElement());
 }
 
 window.saveFileAs = async function () {
@@ -143,8 +156,9 @@ window.restoreColors = function() {
     }
 }
 
-let stub = function () { window.alert("button is not ready"); };
-window.saveFile = stub;
+window.saveFile = function () { 
+
+};
 
 (async function () {
     await window.reloadDynDocs();
