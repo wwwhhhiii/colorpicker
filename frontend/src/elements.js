@@ -1,8 +1,14 @@
+// A reference to currently selected ColorElement object.
+// Used to determine which ColorElement objects to display (description, image, etc.).
 var _selectedColorElement = null;
-// color group name mapped to its ColorElements
+// A mapping of ColorGroup name to its ColorElements array.
+// It is important to add/remove each ColorElement to this map:
+// this map should always reflect the current set of ColorElements loaded in the app. 
 var _globColorGroups = new Map();
 
-// screenshot, description, etc.
+// A convenience object responsible for storing set of elements for
+// ColorElement visualization. Always bound to ColorElement and shouldn't exist by itself.
+// Initializes image and description box HTML elements.
 class ColorView {
     constructor(description, imgSrc) {
         this._imgContainer = document.createElement("div");
@@ -94,6 +100,10 @@ class ColorView {
     }
 }
 
+// A convenience object responsible for initialization and providing API for 
+// "color line": ColorGroup member element.
+// Has color input, name. Referes to one ColorGroup at a time.
+// Has associated ColorView object that provides visualization for it.
 class ColorElement {
     constructor(colorGO, screenshotViewContainer, descrContainer) {
         this._colorView = new ColorView(colorGO.description, colorGO.img);
@@ -178,6 +188,11 @@ class ColorElement {
     }
 }
 
+// A convenicence object responsible for initalization and providing API for
+// "color group": a set of several ColorElements. May have 0 to N ColorElements.
+// Its name is considered to be unique. Many app's critical logic parts
+// are based on ColorGroup name uniqueness, however the name uniqueness is not
+// guaranteed by the input files design, so it's up to the user to provide correct files.
 export class ColorGroup {
     constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
         this._name = colorGroupGO.name;
