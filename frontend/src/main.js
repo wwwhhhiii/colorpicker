@@ -143,7 +143,6 @@ window.saveFileAs = async function () {
     }
 }
 
-// TODO broken
 window.restoreColors = function() {
     try {
         ColorsBackupRestore()
@@ -151,7 +150,7 @@ window.restoreColors = function() {
             if (origColorGroups === null) {
                 return
             }
-            restoreColors(colorGroupsContainer, origColorGroups);
+            restoreColors(origColorGroups);
         })
         .catch((err) => {
             console.error(err);

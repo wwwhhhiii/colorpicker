@@ -1,8 +1,10 @@
 var _selectedColorElement = null;
+// color group name mapped to its ColorElements
+var _globColorGroups = new Map();
 
 // screenshot, description, etc.
 class ColorView {
-    constructor() {
+    constructor(description) {
         this._imgContainer = document.createElement("div");
         this._imgContainer.className = "screenshot-container";
         this._imgElement = document.createElement("img");
@@ -15,6 +17,7 @@ class ColorView {
         this._colorTextArea.style.resize = 'none';
         this._colorTextArea.className = "color-textarea";
         this._colorTextArea.id = window.crypto.randomUUID();
+        this._colorTextArea.value = description;
     }
 
     delete() {
@@ -89,7 +92,7 @@ class ColorView {
 
 class ColorElement {
     constructor(colorGO, screenshotViewContainer, descrContainer) {
-        this._colorView = new ColorView();
+        this._colorView = new ColorView(colorGO.description);
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
@@ -179,26 +182,31 @@ export class ColorGroup {
         this._groupContainer = document.createElement("div");
         this._groupContainer.className = "color-group-container";
         this._groupContainer.name =  this._name;
-
+        
         this._groupMenu = document.createElement("menu");
         this._groupMenu.id =  this._name;
         this._groupMenu.name =  this._name;
         this._groupMenu.className = "colors-group-menu";
         this._groupMenu.elemsHidden = false;
-
+        
         this._groupLabel = this._createLabel(this._groupMenu);
         this._groupContainer.appendChild(this._groupLabel);
         this._groupContainer.appendChild(this._groupMenu);
-
+        
         colorGroupGO.colors.forEach(colorGO => {
             this.addColorElement(
                 new ColorElement(colorGO, screenshotViewContainer, descrContainer));
-        })
+            })
+
+        // set ColorElement under color group name
+        _globColorGroups.set(this._name, [...this._colorElements.values()]);
     }
+
 
     delete() {
         this.clearColorElements();
         this._groupContainer.remove();
+        _globColorGroups.delete(this._name);
     }
 
     _createLabel(menu) {
@@ -309,14 +317,14 @@ function hexStrToRGB(hexstr) {
     }
 }
 
-// TODO broken
-export function restoreColors(colorsGroupContainer, origColorGroups) {
+export function restoreColors(origColorGroups) {
     origColorGroups.forEach(origGroup => {
-        let cg = colorsGroupContainer.colorsGroupMap.get(origGroup.name);
-        if (cg === null) { return };
-        for (let i = 0; i < origGroup.colors.length; i++) {
+        let cg = _globColorGroups.get(origGroup.name);
+        console.log(cg);
+        if (cg == null) { return };
+        for (let i = 0; i <= cg.length - 1; i++) {
             let origColor = origGroup.colors[i];
-            cg.__colorElems[i].__colorInput.value = rgbToHexStr(
+            cg[i].getColorInput().value = rgbToHexStr(
                 origColor.rgb[0],
                 origColor.rgb[1],
                 origColor.rgb[2],
