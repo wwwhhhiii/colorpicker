@@ -13,7 +13,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/labstack/gommon/log"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -382,7 +381,7 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 		// metafile exists
 		metafile, err := parseMetaFile(metafilename)
 		if err != nil {
-			log.Errorf("error parsing meta file %s", metafilename)
+			fmt.Printf("error parsing meta file %s", metafilename)
 		}
 		for _, group := range colorGroups {
 			descArr, ok := metafile.Description[group.Name]
