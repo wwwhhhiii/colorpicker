@@ -14,6 +14,10 @@ export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
 
+export function OpenImgFileDialog() {
+  return window['go']['main']['App']['OpenImgFileDialog']();
+}
+
 export function OverwriteColorsFiles(arg1, arg2) {
   return window['go']['main']['App']['OverwriteColorsFiles'](arg1, arg2);
 }

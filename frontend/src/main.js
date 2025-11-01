@@ -1,11 +1,18 @@
 import './style.css';
 
-import {LoadColorsFile, SaveColorsDialog, ColorsBackupRestore, OverwriteColorsFiles} from "../wailsjs/go/main/App";
+import {
+    LoadColorsFile,
+    SaveColorsDialog,
+    ColorsBackupRestore,
+    OverwriteColorsFiles,
+    OpenImgFileDialog,
+} from "../wailsjs/go/main/App";
 import { 
     ColorGroup,
     onDocsReload,
     onFileReload,
     restoreColors,
+    getSelectedColorElement,
 } from './elements';
 
 const APP_SOURCE_HTML = 'page.html';
@@ -169,6 +176,15 @@ window.saveFile = function () {
     }
     if (window.confirm("original files will be overwritten")) {
         try {
+            colorGroupsContainer.colorGroups.forEach(async group => {
+                for (let [_, color] of group._colorElements) {
+                    let arrbuf = await color.getImgArrayBuffer();
+                    if (arrbuf !== null) {
+                        console.log(arrbuf);
+                    }
+                    
+                }
+            });
             let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
             OverwriteColorsFiles(_loadedColorsFile, arr)
             .catch((err) => {
@@ -180,6 +196,22 @@ window.saveFile = function () {
             window.alert(`critical error: ${err}`);
         }
     }
+};
+
+window.selectImg = function() {
+    let selectedElem = getSelectedColorElement();
+    if (selectedElem === null) {
+        window.alert("select element for image");
+        return
+    }
+    OpenImgFileDialog()
+    .then(async (result) => {
+        selectedElem.getColorView().setImgSrcFS(result);
+    })
+    .catch((err) => {
+        console.error(err);
+        window.alert(`critical error: ${err}`);
+    });
 };
 
 (async function () {

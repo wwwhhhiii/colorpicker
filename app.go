@@ -50,6 +50,22 @@ func (a *App) OpenFileDialog() (string, error) {
 	return file, err
 }
 
+func (a *App) OpenImgFileDialog() (string, error) {
+	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select image file",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Images (*.png;*.jpg)",
+				Pattern:     "*.png;*.jpg",
+			},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return file, err
+}
+
 type Color struct {
 	Rgb         [3]uint8 `json:"rgb"`
 	Alpha       float32  `json:"alpha"`
@@ -511,13 +527,13 @@ func writeColorsFileJson(filename string, colors []ColorGroup) error {
 	return nil
 }
 
-func writeColorsMetaFileJson(filename string, colors []ColorGroup) error {
+func writeColorsMetaFileJson(filename string, colorGroups []ColorGroup) error {
 	f, err := os.Create(fmt.Sprintf("%s.meta.json", filename))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	jsonData, err := json.MarshalIndent(newColorsMetaFile(colors), "", "  ")
+	jsonData, err := json.MarshalIndent(newColorsMetaFile(colorGroups), "", "  ")
 	if err != nil {
 		return err
 	}
@@ -538,6 +554,7 @@ func (a *App) OverwriteColorsFiles(filename string, colors []ColorGroup) error {
 	return err
 }
 
+// main function to save current state of the colors from the app to disk
 func (a *App) SaveColors(filename string, colors []ColorGroup) error {
 	// main photoshop colors file
 	err := writeColorsFile(filename, colors)

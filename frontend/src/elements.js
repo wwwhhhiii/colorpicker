@@ -6,6 +6,10 @@ var _selectedColorElement = null;
 // this map should always reflect the current set of ColorElements loaded in the app. 
 var _globColorGroups = new Map();
 
+export function getSelectedColorElement() {
+    return _selectedColorElement;
+}
+
 // A convenience object responsible for storing set of elements for
 // ColorElement visualization. Always bound to ColorElement and shouldn't exist by itself.
 // Initializes image and description box HTML elements.
@@ -16,6 +20,7 @@ class ColorView {
         this._imgElement = document.createElement("img");
         this._imgElement.className = "clipboard-img";
         this._imgElement.src = imgSrc;
+        this._imgFilepath = null;
         this._imgContainer.appendChild(this._imgElement);
         this._configureImageContainer(this._imgContainer);
 
@@ -44,8 +49,19 @@ class ColorView {
         return this._colorTextArea;
     }
 
-    setImgSrc(newSrc) {
-        this._imgElement.src = newSrc;
+    // upload image to color view from filesystem
+    async setImgSrcFS(filepath) {
+        // leverage golang's backend asset server
+        // by trimming drive part from filepath
+        // and getting file through asset server
+        if (filepath.indexOf(":") == -1) {
+            console.log(`file ${filepath} does not contain drive part`);
+            window.alert("unprocessable file");
+            return
+        }
+        this._imgElement.src = filepath.substring(
+            filepath.lastIndexOf(":") + 1);
+        this._imgFilepath = filepath;
     }
 
     _configureImageContainer(containerElem) {
@@ -139,7 +155,7 @@ class ColorElement {
                         throw new Error("clipboard does not contain image");
                     }
                     let blob = await item.getType("image/png");
-                    this._colorView.setImgSrc(URL.createObjectURL(blob));
+                    this._colorView.setImgBlob(URL.createObjectURL(blob));
                 }
             } catch (error) {
                 console.error(error);
@@ -185,6 +201,17 @@ class ColorElement {
             description: this._colorView.getColorTextarea().value,
             img: this._colorView.getImgElement().src,
         }
+    }
+
+    // returns either blob image array buffer or nil
+    async getImgArrayBuffer() {
+        let src = this._colorView.getImgElement().src;
+        // TODO diry hack now to skip empty images
+        if (src.length < 30) {
+            return null;
+        }
+        let blob = await fetch(src).then(r => r.blob());
+        return await blob.arrayBuffer()
     }
 }
 
