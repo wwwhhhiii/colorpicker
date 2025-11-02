@@ -127,30 +127,16 @@ func NewColorsFile(colors []ColorGroup) *ColorsFile {
 }
 
 type ColorsMetaFile struct {
-	Name        string              `json:"Name"`
-	Version     string              `json:"Version"`
-	Description map[string][]string `json:"Description"`
-	Images      map[string][]string `json:"Images"`
+	Name        string       `json:"Name"`
+	Version     string       `json:"Version"`
+	ColorGroups []ColorGroup `json:"ColorGroups"`
 }
 
-func newColorsMetaFile(colors []ColorGroup) *ColorsMetaFile {
-	colorsDescMap := make(map[string][]string, len(colors))
-	colorImagesMap := make(map[string][]string, len(colors))
-	for _, colorGroup := range colors {
-		colorsDescArr := make([]string, 0, len(colorGroup.Colors))
-		colorsImgArr := make([]string, 0, len(colorGroup.Colors))
-		for _, color := range colorGroup.Colors {
-			colorsDescArr = append(colorsDescArr, color.Description)
-			colorsImgArr = append(colorsImgArr, color.Img)
-		}
-		colorsDescMap[colorGroup.Name] = colorsDescArr
-		colorImagesMap[colorGroup.Name] = colorsImgArr
-	}
+func newColorsMetaFile(colorGroups []ColorGroup) *ColorsMetaFile {
 	return &ColorsMetaFile{
 		Name:        "Colors metadata",
 		Version:     COLORS_META_FILE_VER,
-		Description: colorsDescMap,
-		Images:      colorImagesMap,
+		ColorGroups: colorGroups,
 	}
 }
 
@@ -387,54 +373,41 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	if selectedFile == "" {
 		return &ColorsFileLoadResult{nil, selectedFile}, nil
 	}
-	file, err := os.Open(selectedFile)
-	if err != nil {
-		return &ColorsFileLoadResult{nil, selectedFile}, err
-	}
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	colorGroups, err := parseColorFile(reader)
-	if err != nil {
-		return &ColorsFileLoadResult{nil, selectedFile}, err
-	}
-	// try loading meta file if exists
+	// try loading color groups from meta file with the same name as colors file first.
+	// if meta file exist - load color groups from there, otherwise open selected colors file
 	sdir, sfile := filepath.Split(selectedFile)
 	sfile = strings.TrimSuffix(sfile, filepath.Ext(sfile))
 	metafilename := fmt.Sprintf("%s.meta.json", filepath.Join(sdir, sfile))
+
+	var colorGroups []ColorGroup
 	if _, err := os.Stat(metafilename); err == nil {
 		metafile, err := parseMetaFile(metafilename)
 		if err != nil {
 			fmt.Printf("error parsing meta file %s", metafilename)
 			return nil, err
 		}
-		for _, group := range colorGroups {
-			descArr, ok := metafile.Description[group.Name]
-			if ok {
-				for i, descLine := range descArr {
-					if i <= len(group.Colors)-1 {
-						group.Colors[i].Description = descLine
-					}
-				}
-			}
-			imgArr, ok := metafile.Images[group.Name]
-			if ok {
-				for i, imgSrc := range imgArr {
-					if i <= len(group.Colors)-1 {
-						group.Colors[i].Img = imgSrc
-					}
-				}
-			}
+		colorGroups = metafile.ColorGroups
+	} else {
+		file, err := os.Open(selectedFile)
+		if err != nil {
+			return nil, err
 		}
-	}
-	// create file backup just in case
-	file.Seek(0, io.SeekStart)
-	err = createBackupFile(file)
-	if err != nil {
-		return &ColorsFileLoadResult{colorGroups, selectedFile}, err
+		defer file.Close()
+		reader := bufio.NewReader(file)
+		colorGroups, err = parseColorFile(reader)
+		if err != nil {
+			return nil, err
+		}
+		// create file backup just in case
+		file.Seek(0, io.SeekStart)
+		err = createBackupFile(file)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// store in-memory backup to restore original colors on demand
 	bkpColorGroups = colorGroups
-	return &ColorsFileLoadResult{colorGroups, selectedFile}, err
+	return &ColorsFileLoadResult{colorGroups, selectedFile}, nil
 }
 
 func writeColorsFile(filename string, colors []ColorGroup) error {
@@ -583,4 +556,26 @@ func (a *App) SaveColorsDialog(colors []ColorGroup) error {
 		return nil
 	}
 	return a.SaveColors(filename, colors)
+}
+
+func (a *App) StashSelectedImg(img string, selectedColorsFile string, colorName string) (string, error) {
+	// create color dir in images stash
+	colorFileName := strings.TrimSuffix(
+		filepath.Base(selectedColorsFile), filepath.Ext(selectedColorsFile))
+	imgDirName := fmt.Sprintf("%s_images", colorFileName)
+	colorDir := filepath.Join(filepath.Dir(selectedColorsFile), imgDirName, colorName)
+	os.MkdirAll(colorDir, os.ModePerm)
+	dst := filepath.Join(colorDir, filepath.Base(img))
+	srcfile, err := os.Open(img)
+	if err != nil {
+		return "", err
+	}
+	defer srcfile.Close()
+	dstfile, err := os.Create(dst)
+	if err != nil {
+		return "", err
+	}
+	defer dstfile.Close()
+	_, err = io.Copy(dstfile, srcfile)
+	return dst, err
 }

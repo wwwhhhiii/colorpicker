@@ -19,8 +19,8 @@ class ColorView {
         this._imgContainer.className = "screenshot-container";
         this._imgElement = document.createElement("img");
         this._imgElement.className = "clipboard-img";
-        this._imgElement.src = imgSrc;
         this._imgFilepath = null;
+        this.setImgSrcFS(imgSrc);
         this._imgContainer.appendChild(this._imgElement);
         this._configureImageContainer(this._imgContainer);
 
@@ -45,12 +45,22 @@ class ColorView {
         return this._imgElement;
     }
 
+    // full path with drive
+    getImgFilepath() {
+        return this._imgFilepath;
+    }
+
     getColorTextarea() {
         return this._colorTextArea;
     }
 
     // upload image to color view from filesystem
-    async setImgSrcFS(filepath) {
+    setImgSrcFS(filepath) {
+        if (filepath.length == 0) {
+            // just empty
+            this._imgFilepath = filepath;
+            return;
+        }
         // leverage golang's backend asset server
         // by trimming drive part from filepath
         // and getting file through asset server
@@ -132,7 +142,6 @@ class ColorElement {
         this._element = document.createElement("li");
         this._element.id = id;
         this._element.className = "color-element";
-        this._element.textContent = "test"; // TODO
         this._colorInput = document.createElement("input");
         this._colorInput.type = "color";
         this._colorInput.className = "color-input";
@@ -195,23 +204,13 @@ class ColorElement {
 
     toJSON() {
         let res = hexStrToRGB(this._colorInput.value)
+        console.log(this._colorView.getImgFilepath());
         return {
             rgb: [res.r, res.g, res.b],
             alpha: 1,  // TODO change it
             description: this._colorView.getColorTextarea().value,
-            img: this._colorView.getImgElement().src,
+            img: this._colorView.getImgFilepath(),
         }
-    }
-
-    // returns either blob image array buffer or nil
-    async getImgArrayBuffer() {
-        let src = this._colorView.getImgElement().src;
-        // TODO diry hack now to skip empty images
-        if (src.length < 30) {
-            return null;
-        }
-        let blob = await fetch(src).then(r => r.blob());
-        return await blob.arrayBuffer()
     }
 }
 
@@ -242,8 +241,9 @@ export class ColorGroup {
         
         colorGroupGO.colors.forEach(colorGO => {
             this.addColorElement(
-                new ColorElement(colorGO, screenshotViewContainer, descrContainer));
-            })
+                new ColorElement(colorGO, screenshotViewContainer, descrContainer)
+            );
+        })
 
         // set ColorElement under color group name
         _globColorGroups.set(this._name, [...this._colorElements.values()]);
@@ -367,7 +367,6 @@ function hexStrToRGB(hexstr) {
 export function restoreColors(origColorGroups) {
     origColorGroups.forEach(origGroup => {
         let cg = _globColorGroups.get(origGroup.name);
-        console.log(cg);
         if (cg == null) { return };
         for (let i = 0; i <= cg.length - 1; i++) {
             let origColor = origGroup.colors[i];

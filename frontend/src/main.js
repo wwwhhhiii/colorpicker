@@ -6,6 +6,7 @@ import {
     ColorsBackupRestore,
     OverwriteColorsFiles,
     OpenImgFileDialog,
+    StashSelectedImg,
 } from "../wailsjs/go/main/App";
 import { 
     ColorGroup,
@@ -169,6 +170,7 @@ window.restoreColors = function() {
     }
 }
 
+// overwrite opened file
 window.saveFile = function () {
     if (_loadedColorsFile === null) {
         window.alert("no colors file loaded");
@@ -176,15 +178,6 @@ window.saveFile = function () {
     }
     if (window.confirm("original files will be overwritten")) {
         try {
-            colorGroupsContainer.colorGroups.forEach(async group => {
-                for (let [_, color] of group._colorElements) {
-                    let arrbuf = await color.getImgArrayBuffer();
-                    if (arrbuf !== null) {
-                        console.log(arrbuf);
-                    }
-                    
-                }
-            });
             let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
             OverwriteColorsFiles(_loadedColorsFile, arr)
             .catch((err) => {
@@ -205,8 +198,21 @@ window.selectImg = function() {
         return
     }
     OpenImgFileDialog()
-    .then(async (result) => {
-        selectedElem.getColorView().setImgSrcFS(result);
+    .then(async (selectedImg) => {
+        // copy img to stash then set src path from stashed img
+        StashSelectedImg(
+            selectedImg,
+            _loadedColorsFile,
+            "Cyan",
+        )
+        .then((stashedImg) => {
+            selectedElem.getColorView().setImgSrcFS(stashedImg);
+
+        })
+        .catch(err => {
+            console.log(err);
+            window.alert(err);
+        })
     })
     .catch((err) => {
         console.error(err);
