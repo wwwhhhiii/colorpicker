@@ -30,6 +30,6 @@ export function SaveColorsDialog(arg1) {
   return window['go']['main']['App']['SaveColorsDialog'](arg1);
 }
 
-export function StashSelectedImg(arg1, arg2, arg3) {
-  return window['go']['main']['App']['StashSelectedImg'](arg1, arg2, arg3);
+export function StashSelectedImg(arg1, arg2) {
+  return window['go']['main']['App']['StashSelectedImg'](arg1, arg2);
 }

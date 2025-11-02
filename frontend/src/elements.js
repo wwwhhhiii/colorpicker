@@ -204,7 +204,6 @@ class ColorElement {
 
     toJSON() {
         let res = hexStrToRGB(this._colorInput.value)
-        console.log(this._colorView.getImgFilepath());
         return {
             rgb: [res.r, res.g, res.b],
             alpha: 1,  // TODO change it

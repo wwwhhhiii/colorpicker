@@ -170,24 +170,22 @@ window.restoreColors = function() {
     }
 }
 
-// overwrite opened file
+// overwrite opened file with changes
 window.saveFile = function () {
     if (_loadedColorsFile === null) {
         window.alert("no colors file loaded");
         return
     }
-    if (window.confirm("original files will be overwritten")) {
-        try {
-            let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
-            OverwriteColorsFiles(_loadedColorsFile, arr)
-            .catch((err) => {
-                console.error(err);
-                window.alert(`critical error: ${err}`);
-            })
-        } catch (err) {
+    try {
+        let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
+        OverwriteColorsFiles(_loadedColorsFile, arr)
+        .catch((err) => {
             console.error(err);
             window.alert(`critical error: ${err}`);
-        }
+        })
+    } catch (err) {
+        console.error(err);
+        window.alert(`critical error: ${err}`);
     }
 };
 
@@ -203,7 +201,6 @@ window.selectImg = function() {
         StashSelectedImg(
             selectedImg,
             _loadedColorsFile,
-            "Cyan",
         )
         .then((stashedImg) => {
             selectedElem.getColorView().setImgSrcFS(stashedImg);

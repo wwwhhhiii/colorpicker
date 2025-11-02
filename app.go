@@ -558,12 +558,12 @@ func (a *App) SaveColorsDialog(colors []ColorGroup) error {
 	return a.SaveColors(filename, colors)
 }
 
-func (a *App) StashSelectedImg(img string, selectedColorsFile string, colorName string) (string, error) {
+func (a *App) StashSelectedImg(img string, selectedColorsFile string) (string, error) {
 	// create color dir in images stash
 	colorFileName := strings.TrimSuffix(
 		filepath.Base(selectedColorsFile), filepath.Ext(selectedColorsFile))
 	imgDirName := fmt.Sprintf("%s_images", colorFileName)
-	colorDir := filepath.Join(filepath.Dir(selectedColorsFile), imgDirName, colorName)
+	colorDir := filepath.Join(filepath.Dir(selectedColorsFile), imgDirName)
 	os.MkdirAll(colorDir, os.ModePerm)
 	dst := filepath.Join(colorDir, filepath.Base(img))
 	srcfile, err := os.Open(img)
