@@ -112,6 +112,10 @@ window.loadFile = function () {
 };
 
 window.addColorGroup = function () {
+    if (_loadedColorsFile === null) {
+        window.alert("no file loaded");
+        return
+    }
     if (colorGroupsContainer.colorGroups === undefined) {
         colorGroupsContainer.colorGroups = new Array();
     }
@@ -205,7 +209,6 @@ window.selectImg = function() {
         StashImgByFilename(selectedImg, _loadedColorsFile)
         .then((stashedImg) => {
             selectedElem.getColorView().setImgSrcFS(stashedImg);
-
         })
         .catch(err => {
             console.log(err);

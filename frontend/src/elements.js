@@ -220,6 +220,9 @@ class ColorElement {
 // guaranteed by the input files design, so it's up to the user to provide correct files.
 export class ColorGroup {
     constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
+        this._screenshotViewContainer = screenshotViewContainer;
+        this._descrContainer = descrContainer;
+
         this._name = colorGroupGO.name;
         // uuid string to ColorElement
         this._colorElements = new Map();
@@ -310,11 +313,27 @@ export class ColorGroup {
             evt.stopPropagation();
         })
 
-        // test btn
+        // add color button
         let testBtn = document.createElement("button");
-        testBtn.textContent = "test-button";
+        testBtn.textContent = "добавить цвет";
         testBtn.style.width = "100%";
         dropMenu.appendChild(testBtn);
+
+        testBtn.addEventListener("click", (evt) => {
+            dropMenu.style.display = "none";
+            this.addColorElement(
+                new ColorElement(
+                    {
+                        description: "",
+                        img: "",
+                        rgb: [0, 0, 0],
+                    },
+                    this._screenshotViewContainer,
+                    this._descrContainer,
+                )
+            );
+            evt.stopPropagation();
+        })
 
         groupContainer.appendChild(dropMenu);
 
