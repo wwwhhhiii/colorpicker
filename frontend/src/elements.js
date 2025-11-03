@@ -6,7 +6,7 @@ var _selectedColorElement = null;
 // this map should always reflect the current set of ColorElements loaded in the app. 
 var _globColorGroups = new Map();
 
-var _draggedObj = null;
+var _draggedColorObj = null;
 
 export function getSelectedColorElement() {
     return _selectedColorElement;
@@ -133,7 +133,8 @@ class ColorView {
 // Has color input, name. Referes to one ColorGroup at a time.
 // Has associated ColorView object that provides visualization for it.
 class ColorElement {
-    constructor(colorGO, screenshotViewContainer, descrContainer) {
+    constructor(colorGroup, colorGO, screenshotViewContainer, descrContainer) {
+        this._colorGroup = colorGroup;
         this._colorView = new ColorView(colorGO.description, colorGO.img);
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
@@ -188,8 +189,7 @@ class ColorElement {
             _selectedColorElement._element.style.backgroundColor = '#f003fc';
         })
         this._element.addEventListener('dragstart', (e) => {
-            console.log("drag started", this);
-            _draggedObj = this;
+            _draggedColorObj = this;
         })
     }
 
@@ -249,8 +249,11 @@ export class ColorGroup {
         this._groupMenu.addEventListener("dragenter", (e) => { e.preventDefault() });
         this._groupMenu.addEventListener("dragover", (e) => { e.preventDefault() });
         this._groupMenu.addEventListener("drop", (e) => {
-            this.addColorElement(_draggedObj);
-            _draggedObj = null;
+            // remove color element from old group
+            _draggedColorObj._colorGroup._colorElements.delete(_draggedColorObj.id);
+            // add color element to new group
+            this.addColorElement(_draggedColorObj);
+            _draggedColorObj = null;
         });
         
         this._groupLabel = document.createElement("label");
@@ -268,7 +271,7 @@ export class ColorGroup {
         
         colorGroupGO.colors.forEach(colorGO => {
             this.addColorElement(
-                new ColorElement(colorGO, screenshotViewContainer, descrContainer)
+                new ColorElement(this, colorGO, screenshotViewContainer, descrContainer)
             );
         })
 
@@ -330,15 +333,16 @@ export class ColorGroup {
         })
 
         // add color button
-        let testBtn = document.createElement("button");
-        testBtn.textContent = "добавить цвет";
-        testBtn.style.width = "100%";
-        dropMenu.appendChild(testBtn);
+        let addColorBtn = document.createElement("button");
+        addColorBtn.textContent = "добавить цвет";
+        addColorBtn.style.width = "100%";
+        dropMenu.appendChild(addColorBtn);
 
-        testBtn.addEventListener("click", (evt) => {
+        addColorBtn.addEventListener("click", (evt) => {
             dropMenu.style.display = "none";
             this.addColorElement(
                 new ColorElement(
+                    this,
                     {
                         description: "",
                         img: "",
@@ -402,6 +406,7 @@ export class ColorGroup {
         if (elementObj.id === undefined || elementObj.id === null) {
             throw new Error(`can't add color element, element ${elementObj} has no id`)
         }
+        elementObj._colorGroup = this;
         this._colorElements.set(elementObj.id, elementObj);
         this._groupMenu.appendChild(elementObj.getHtmlElement());
     }
