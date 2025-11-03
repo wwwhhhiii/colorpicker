@@ -6,6 +6,8 @@ var _selectedColorElement = null;
 // this map should always reflect the current set of ColorElements loaded in the app. 
 var _globColorGroups = new Map();
 
+var _draggedObj = null;
+
 export function getSelectedColorElement() {
     return _selectedColorElement;
 }
@@ -140,6 +142,7 @@ class ColorElement {
         this.id = id
 
         this._element = document.createElement("li");
+        this._element.draggable = true;
         this._element.id = id;
         this._element.className = "color-element";
         this._colorInput = document.createElement("input");
@@ -183,6 +186,10 @@ class ColorElement {
     
             _selectedColorElement = this;
             _selectedColorElement._element.style.backgroundColor = '#f003fc';
+        })
+        this._element.addEventListener('dragstart', (e) => {
+            console.log("drag started", this);
+            _draggedObj = this;
         })
     }
 
@@ -236,6 +243,15 @@ export class ColorGroup {
         this._groupMenu.name =  this._name;
         this._groupMenu.className = "colors-group-menu";
         this._groupMenu.elemsHidden = false;
+
+        // in order for drop event to be fired
+        // dragenter and dragover events should be cancelled
+        this._groupMenu.addEventListener("dragenter", (e) => { e.preventDefault() });
+        this._groupMenu.addEventListener("dragover", (e) => { e.preventDefault() });
+        this._groupMenu.addEventListener("drop", (e) => {
+            this.addColorElement(_draggedObj);
+            _draggedObj = null;
+        });
         
         this._groupLabel = document.createElement("label");
         this._renameField = this._createRenameField(this._groupLabel);

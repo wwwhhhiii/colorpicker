@@ -224,5 +224,3 @@ window.selectImg = function() {
 (async function () {
     await window.reloadDynDocs();
 } )();
-
-
