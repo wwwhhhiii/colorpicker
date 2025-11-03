@@ -234,7 +234,16 @@ export class ColorGroup {
         this._groupMenu.className = "colors-group-menu";
         this._groupMenu.elemsHidden = false;
         
-        this._groupLabel = this._createLabel(this._groupMenu);
+        this._groupLabel = document.createElement("label");
+        this._renameField = this._createRenameField(this._groupLabel);
+        this._confLabel(this._groupLabel, this._groupMenu, this._renameField);
+        this._groupContainer.appendChild(
+            this._createDropDownBtn(
+                this._groupContainer,
+                this._groupLabel,
+                this._renameField,
+            ),
+        );
         this._groupContainer.appendChild(this._groupLabel);
         this._groupContainer.appendChild(this._groupMenu);
         
@@ -246,34 +255,7 @@ export class ColorGroup {
 
         // set ColorElement under color group name
         _globColorGroups.set(this._name, [...this._colorElements.values()]);
-
-        this._contextMenu = document.createElement("div");
-        this._contextMenu.style.display = "flex";
-        this._contextMenu.style.flexDirection = "column";
-        this._groupContainer.appendChild(this._contextMenu);
-        this._contextMenu.addEventListener('click', (evt) => {
-            this._contextMenu.style.display = "none";
-            evt.stopPropagation();
-        })
-        let renameBtn = document.createElement("button");
-        renameBtn.textContent = "переименовать";
-        renameBtn.style.display = "block";
-        renameBtn.style.width = "100%";
-        this._contextMenu.appendChild(renameBtn);
-        let testBtn = document.createElement("button");
-        testBtn.textContent = "test-button";
-        testBtn.style.display = "block";
-        testBtn.style.width = "100%";
-        this._contextMenu.appendChild(testBtn);
-        this._contextMenu.style = `position: absolute; display: none;`;
-        this._groupLabel.addEventListener('contextmenu', (evt) => {
-            this._contextMenu.style.display = "block";
-            this._contextMenu.style.left = `${evt.clientX}px`;
-            this._contextMenu.style.top = `${evt.clientY}px`;
-            evt.stopPropagation();
-        })
     }
-
 
     delete() {
         this.clearColorElements();
@@ -281,8 +263,76 @@ export class ColorGroup {
         _globColorGroups.delete(this._name);
     }
 
-    _createLabel(menu) {
-        let label = document.createElement("label");
+    _createRenameField(groupLabel) {
+        let renameField = document.createElement("input");
+        renameField.type = "text";
+        renameField.addEventListener("keydown", (e) => {
+            if (e.key == "Enter") {
+                if (renameField.value !== null && renameField != "") {
+                    groupLabel.textContent = renameField.value;
+                }
+                renameField.replaceWith(groupLabel);
+            }
+            if (e.key == "Escape") {
+                renameField.replaceWith(groupLabel);
+            }
+        })
+        renameField.addEventListener("focusout", (e) => {
+            renameField.replaceWith(groupLabel);
+            renameField.value = "";
+            e.preventDefault();
+            e.stopPropagation();
+        })
+        return renameField
+    }
+
+    _createDropDownBtn(groupContainer, groupLabel, renameField) {
+        let ctxBtn = document.createElement("button");
+        ctxBtn.textContent = "▼";
+
+        let dropMenu = document.createElement("div");
+        dropMenu.style.position = "absolute";
+        dropMenu.style.display = "none";
+        dropMenu.style.width = "120px";
+
+        // rename btn
+        let renameBtn = document.createElement("button");
+        renameBtn.textContent = "переименовать";
+        renameBtn.style.width = "100%";
+        dropMenu.appendChild(renameBtn);
+
+        renameBtn.addEventListener("click", (evt) => {
+            dropMenu.style.display = "none";
+            renameField.value = groupLabel.textContent;
+            groupLabel.replaceWith(renameField);
+            renameField.focus();
+            renameField.select();
+            evt.stopPropagation();
+        })
+
+        // test btn
+        let testBtn = document.createElement("button");
+        testBtn.textContent = "test-button";
+        testBtn.style.width = "100%";
+        dropMenu.appendChild(testBtn);
+
+        groupContainer.appendChild(dropMenu);
+
+        dropMenu.onmouseleave = (_) => {
+            dropMenu.style.display = "none";
+        }
+        ctxBtn.addEventListener("click", (evt) => {
+            dropMenu.style.display = "block";
+            let brect = ctxBtn.getBoundingClientRect();
+            dropMenu.style.left = `${brect.left}px`;
+            dropMenu.style.top = `${brect.bottom}px`;
+            evt.stopPropagation();
+        })
+
+        return ctxBtn
+    }
+
+    _confLabel(label, menu, renameField) {
         label.className = "color-group-label";
         label.for = menu.id;
         label.htmlFor = menu.id;
@@ -297,8 +347,6 @@ export class ColorGroup {
             e.stopPropagation();
         }
 
-        let renameField = document.createElement("input");
-        renameField.type = "text";
         // rename label with doublelick
         label.ondblclick = function (e) {
             renameField.value = label.textContent;
@@ -306,19 +354,6 @@ export class ColorGroup {
             renameField.focus();
             renameField.select();
             e.stopPropagation();
-        }
-        renameField.onkeydown = function (e) {
-            if (e.key == "Enter") {
-                if (renameField.value !== null && renameField != "") {
-                    label.textContent = renameField.value;
-                }
-                renameField.replaceWith(label);
-                e.preventDefault();
-            }
-            if (e.key == "Escape") {
-                renameField.replaceWith(label);
-                e.preventDefault();
-            }
         }
 
         return label
@@ -358,7 +393,7 @@ export class ColorGroup {
             elemsarr.push(elem.toJSON());
         }
         return {
-            name: this._name,
+            name: this._groupLabel.textContent,
             colrspace: 0,  // TODO change it
             colors: elemsarr,
         }
@@ -389,6 +424,9 @@ function hexStrToRGB(hexstr) {
     }
 }
 
+// color groups may be renamed, but their names at file load time
+// remain unchanged (colorGroup._name), so global colors group map
+// can be used to refer to them the same as they were not renamed
 export function restoreColors(origColorGroups) {
     origColorGroups.forEach(origGroup => {
         let cg = _globColorGroups.get(origGroup.name);
