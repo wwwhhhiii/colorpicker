@@ -246,6 +246,32 @@ export class ColorGroup {
 
         // set ColorElement under color group name
         _globColorGroups.set(this._name, [...this._colorElements.values()]);
+
+        this._contextMenu = document.createElement("div");
+        this._contextMenu.style.display = "flex";
+        this._contextMenu.style.flexDirection = "column";
+        this._groupContainer.appendChild(this._contextMenu);
+        this._contextMenu.addEventListener('click', (evt) => {
+            this._contextMenu.style.display = "none";
+            evt.stopPropagation();
+        })
+        let renameBtn = document.createElement("button");
+        renameBtn.textContent = "переименовать";
+        renameBtn.style.display = "block";
+        renameBtn.style.width = "100%";
+        this._contextMenu.appendChild(renameBtn);
+        let testBtn = document.createElement("button");
+        testBtn.textContent = "test-button";
+        testBtn.style.display = "block";
+        testBtn.style.width = "100%";
+        this._contextMenu.appendChild(testBtn);
+        this._contextMenu.style = `position: absolute; display: none;`;
+        this._groupLabel.addEventListener('contextmenu', (evt) => {
+            this._contextMenu.style.display = "block";
+            this._contextMenu.style.left = `${evt.clientX}px`;
+            this._contextMenu.style.top = `${evt.clientY}px`;
+            evt.stopPropagation();
+        })
     }
 
 

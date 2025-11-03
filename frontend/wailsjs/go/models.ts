@@ -84,6 +84,20 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class SaveColorsDialogResult {
+	    savedFile: string;
+	    error: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new SaveColorsDialogResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.savedFile = source["savedFile"];
+	        this.error = source["error"];
+	    }
+	}
 
 }
 

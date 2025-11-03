@@ -6,7 +6,7 @@ import {
     ColorsBackupRestore,
     OverwriteColorsFiles,
     OpenImgFileDialog,
-    StashSelectedImg,
+    StashImgByFilename,
 } from "../wailsjs/go/main/App";
 import { 
     ColorGroup,
@@ -135,10 +135,10 @@ window.saveFileAs = async function () {
     try {
         let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
         SaveColorsDialog(arr)
-            .then((result) => {
-                if (result !== null) {
-                    console.error(result);
-                    window.alert(result);
+            .then((res) => {
+                if (res.error !== null) {
+                    console.error(res.error);
+                    window.alert(res.error);
                 }
             })
             .catch((err) => {
@@ -195,13 +195,10 @@ window.selectImg = function() {
         window.alert("select element for image");
         return
     }
+    // copy img to stash then set src path from stashed img
     OpenImgFileDialog()
     .then(async (selectedImg) => {
-        // copy img to stash then set src path from stashed img
-        StashSelectedImg(
-            selectedImg,
-            _loadedColorsFile,
-        )
+        StashImgByFilename(selectedImg, _loadedColorsFile)
         .then((stashedImg) => {
             selectedElem.getColorView().setImgSrcFS(stashedImg);
 

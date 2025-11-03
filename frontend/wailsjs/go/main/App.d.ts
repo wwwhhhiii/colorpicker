@@ -14,6 +14,6 @@ export function OverwriteColorsFiles(arg1:string,arg2:Array<main.ColorGroup>):Pr
 
 export function SaveColors(arg1:string,arg2:Array<main.ColorGroup>):Promise<void>;
 
-export function SaveColorsDialog(arg1:Array<main.ColorGroup>):Promise<void>;
+export function SaveColorsDialog(arg1:Array<main.ColorGroup>):Promise<main.SaveColorsDialogResult>;
 
-export function StashSelectedImg(arg1:string,arg2:string):Promise<string>;
+export function StashImgByFilename(arg1:string,arg2:string):Promise<string>;

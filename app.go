@@ -517,6 +517,53 @@ func writeColorsMetaFileJson(filename string, colorGroups []ColorGroup) error {
 	return nil
 }
 
+func StashImg(img string, dir string) (string, error) {
+	os.MkdirAll(dir, os.ModePerm)
+	dst := filepath.Join(dir, filepath.Base(img))
+	srcfile, err := os.Open(img)
+	if err != nil {
+		return "", err
+	}
+	defer srcfile.Close()
+	dstfile, err := os.Create(dst)
+	if err != nil {
+		return "", err
+	}
+	defer dstfile.Close()
+	_, err = io.Copy(dstfile, srcfile)
+	return dst, err
+}
+
+func imgDirFromFilename(filename string) string {
+	return filepath.Join(filepath.Dir(filename), "colors_images")
+}
+
+func (a *App) StashImgByFilename(img string, filename string) (string, error) {
+	imagesDir := imgDirFromFilename(filename)
+	err := os.MkdirAll(imagesDir, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+	return StashImg(img, imagesDir)
+}
+
+func writeStaticFiles(filename string, colorGroups []ColorGroup) error {
+	// save images
+	colorsDir := imgDirFromFilename(filename)
+	err := os.MkdirAll(colorsDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	for _, group := range colorGroups {
+		for _, color := range group.Colors {
+			if color.Img != "" {
+				StashImg(color.Img, colorsDir)
+			}
+		}
+	}
+	return nil
+}
+
 func (a *App) OverwriteColorsFiles(filename string, colors []ColorGroup) error {
 	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
 	err := writeColorsFile(filename, colors)
@@ -534,6 +581,10 @@ func (a *App) SaveColors(filename string, colors []ColorGroup) error {
 	if err != nil {
 		return err
 	}
+	err = writeStaticFiles(filename, colors)
+	if err != nil {
+		return err
+	}
 	// meta info: desc, screenshots path, etc.
 	err = writeColorsMetaFileJson(filename, colors)
 	if err != nil {
@@ -547,35 +598,22 @@ func (a *App) SaveColors(filename string, colors []ColorGroup) error {
 	return nil
 }
 
-func (a *App) SaveColorsDialog(colors []ColorGroup) error {
-	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
-	if err != nil {
-		return err
-	}
-	if filename == "" {
-		return nil
-	}
-	return a.SaveColors(filename, colors)
+type SaveColorsDialogResult struct {
+	SavedFile string `json:"savedFile"`
+	Error     error  `json:"error"`
 }
 
-func (a *App) StashSelectedImg(img string, selectedColorsFile string) (string, error) {
-	// create color dir in images stash
-	colorFileName := strings.TrimSuffix(
-		filepath.Base(selectedColorsFile), filepath.Ext(selectedColorsFile))
-	imgDirName := fmt.Sprintf("%s_images", colorFileName)
-	colorDir := filepath.Join(filepath.Dir(selectedColorsFile), imgDirName)
-	os.MkdirAll(colorDir, os.ModePerm)
-	dst := filepath.Join(colorDir, filepath.Base(img))
-	srcfile, err := os.Open(img)
+func (a *App) SaveColorsDialog(colors []ColorGroup) SaveColorsDialogResult {
+	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
 	if err != nil {
-		return "", err
+		return SaveColorsDialogResult{"", err}
 	}
-	defer srcfile.Close()
-	dstfile, err := os.Create(dst)
+	if filename == "" {
+		return SaveColorsDialogResult{"", nil}
+	}
+	err = a.SaveColors(filename, colors)
 	if err != nil {
-		return "", err
+		return SaveColorsDialogResult{"", err}
 	}
-	defer dstfile.Close()
-	_, err = io.Copy(dstfile, srcfile)
-	return dst, err
+	return SaveColorsDialogResult{filename, nil}
 }
