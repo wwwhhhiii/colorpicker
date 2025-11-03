@@ -117,7 +117,7 @@ window.addColorGroup = function () {
     }
     let cg = new ColorGroup(
         {
-            name: "unnamed group",
+            name: "new group",
             colorspace: 0,
             colors: [],
         },
@@ -126,6 +126,10 @@ window.addColorGroup = function () {
     );
     colorGroupsContainer.colorGroups.push(cg);
     colorGroupsContainer.appendChild(cg.getHtmlElement());
+    cg._renameField.value = cg._groupLabel.textContent;
+    cg._groupLabel.replaceWith(cg._renameField);
+    cg._renameField.focus();
+    cg._renameField.select();
 }
 
 window.saveFileAs = async function () {
