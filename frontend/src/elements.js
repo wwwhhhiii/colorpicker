@@ -161,7 +161,7 @@ class ColorElement {
         this._removeBtn.textContent = "✖";
         this._element.append(this._removeBtn);
         this._removeBtn.addEventListener('click', (e) => {
-            if (window.confirm("remove color?")) {
+            if (window.confirm("удалить цвет?")) {
                 this._colorGroup.removeColorElement(this);
                 this.delete();
             }
