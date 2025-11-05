@@ -302,6 +302,10 @@ export class ColorGroup {
         renameField.type = "text";
         renameField.addEventListener("keydown", (e) => {
             if (e.key == "Enter") {
+                if (GlobColorGroups.has(renameField.value)) {
+                    window.alert("Группа с таким именем уже существует");
+                    return
+                }
                 if (renameField.value !== null && renameField != "") {
                     groupLabel.textContent = renameField.value;
                 }
