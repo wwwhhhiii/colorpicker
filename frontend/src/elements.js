@@ -1,10 +1,9 @@
 // A reference to currently selected ColorElement object.
 // Used to determine which ColorElement objects to display (description, image, etc.).
 var _selectedColorElement = null;
-// A mapping of ColorGroup name to its ColorElements array.
-// It is important to add/remove each ColorElement to this map:
-// this map should always reflect the current set of ColorElements loaded in the app. 
-var _globColorGroups = new Map();
+// A color group registry which is used by frontend to save color groups
+// and get references to CologGroup objects by their names
+export var GlobColorGroups = new Map();
 
 var _draggedColorObj = null;
 
@@ -74,6 +73,11 @@ class ColorView {
         this._imgElement.src = filepath.substring(
             filepath.lastIndexOf(":") + 1);
         this._imgFilepath = filepath;
+    }
+
+    setImgClipboardBlob(url) {
+        this._imgElement.src = url;
+        this._imgFilepath = null;
     }
 
     _configureImageContainer(containerElem) {
@@ -153,9 +157,17 @@ class ColorElement {
             colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2],
         )
         this._element.appendChild(this._colorInput);
-        this._element.addEventListener('dblclick', () => {
-            window.alert(`you clicked ${e.target.textContent}`);
-        })
+        this._removeBtn = document.createElement("button");
+        this._removeBtn.textContent = "✖";
+        this._element.append(this._removeBtn);
+        this._removeBtn.addEventListener('click', (e) => {
+            if (window.confirm("remove color?")) {
+                this._colorGroup.removeColorElement(this);
+                this.delete();
+            }
+            e.stopPropagation();
+        });
+
         this._element.addEventListener('paste', async () => {
             if (_selectedColorElement === null) {
                 window.alert("select color line before paste");
@@ -168,13 +180,13 @@ class ColorElement {
                         throw new Error("clipboard does not contain image");
                     }
                     let blob = await item.getType("image/png");
-                    this._colorView.setImgBlob(URL.createObjectURL(blob));
+                    this._colorView.setImgClipboardBlob(URL.createObjectURL(blob));
                 }
             } catch (error) {
                 console.error(error);
                 window.alert(error);
             }
-        })
+        });
         this._element.addEventListener('click', () => {
             if (_selectedColorElement !== null) {
                 _selectedColorElement._element.style.backgroundColor = '';
@@ -190,7 +202,7 @@ class ColorElement {
         })
         this._element.addEventListener('dragstart', (e) => {
             _draggedColorObj = this;
-        })
+        });
     }
 
     delete() {
@@ -275,14 +287,14 @@ export class ColorGroup {
             );
         })
 
-        // set ColorElement under color group name
-        _globColorGroups.set(this._name, [...this._colorElements.values()]);
+        // add color group to global registry
+        GlobColorGroups.set(this._name, this);
     }
 
     delete() {
         this.clearColorElements();
         this._groupContainer.remove();
-        _globColorGroups.delete(this._name);
+        GlobColorGroups.delete(this._name);
     }
 
     _createRenameField(groupLabel) {
@@ -302,8 +314,8 @@ export class ColorGroup {
         renameField.addEventListener("focusout", (e) => {
             renameField.replaceWith(groupLabel);
             renameField.value = "";
-            e.preventDefault();
-            e.stopPropagation();
+            // e.preventDefault();
+            // e.stopPropagation();
         })
         return renameField
     }
@@ -329,7 +341,7 @@ export class ColorGroup {
             groupLabel.replaceWith(renameField);
             renameField.focus();
             renameField.select();
-            evt.stopPropagation();
+            // evt.stopPropagation();
         })
 
         // add color button
@@ -352,8 +364,21 @@ export class ColorGroup {
                     this._descrContainer,
                 )
             );
-            evt.stopPropagation();
+            // evt.stopPropagation();
         })
+
+        // delete group button
+        let delGroupBtn = document.createElement("button");
+        delGroupBtn.textContent = "удалить";
+        delGroupBtn.style.width = "100%";
+        dropMenu.appendChild(delGroupBtn);
+
+        delGroupBtn.addEventListener("click", (evt) => {
+            dropMenu.style.display = "none";
+            if (window.confirm("удалить группу?")) {
+                this.delete();
+            }
+        });
 
         groupContainer.appendChild(dropMenu);
 
@@ -365,7 +390,7 @@ export class ColorGroup {
             let brect = ctxBtn.getBoundingClientRect();
             dropMenu.style.left = `${brect.left}px`;
             dropMenu.style.top = `${brect.bottom}px`;
-            evt.stopPropagation();
+            // evt.stopPropagation();
         })
 
         return ctxBtn
@@ -383,7 +408,7 @@ export class ColorGroup {
                 color.style.display = menu.elemsHidden ? 'block' : 'none';
             }
             menu.elemsHidden = !menu.elemsHidden;
-            e.stopPropagation();
+            // e.stopPropagation();
         }
 
         // rename label with doublelick
@@ -392,7 +417,7 @@ export class ColorGroup {
             label.replaceWith(renameField);
             renameField.focus();
             renameField.select();
-            e.stopPropagation();
+            // e.stopPropagation();
         }
 
         return label
@@ -411,9 +436,13 @@ export class ColorGroup {
         this._groupMenu.appendChild(elementObj.getHtmlElement());
     }
 
+    getColorElements() {
+        return Array.from(this._colorElements.values());
+    }
+
     removeColorElement(elementObj) {
         if (elementObj.id === undefined || elementObj.id === null) {
-            throw new Error(`can't add color element, element ${elementObj} has no id`)
+            throw new Error(`can't remove color element, element ${elementObj} has no id`)
         }
         this._colorElements.delete(elementObj.id);
         this._groupMenu.removeChild(elementObj.getHtmlElement());
@@ -469,11 +498,11 @@ function hexStrToRGB(hexstr) {
 // can be used to refer to them the same as they were not renamed
 export function restoreColors(origColorGroups) {
     origColorGroups.forEach(origGroup => {
-        let cg = _globColorGroups.get(origGroup.name);
-        if (cg == null) { return };
-        for (let i = 0; i <= cg.length - 1; i++) {
+        let cg = GlobColorGroups.get(origGroup.name);
+        if (cg === null) { return };
+        for (let i = 0; i <= cg.getColorElements().length - 1; i++) {
             let origColor = origGroup.colors[i];
-            cg[i].getColorInput().value = rgbToHexStr(
+            cg.getColorElements()[i].getColorInput().value = rgbToHexStr(
                 origColor.rgb[0],
                 origColor.rgb[1],
                 origColor.rgb[2],

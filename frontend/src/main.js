@@ -8,7 +8,8 @@ import {
     OpenImgFileDialog,
     StashImgByFilename,
 } from "../wailsjs/go/main/App";
-import { 
+import {
+    GlobColorGroups,
     ColorGroup,
     onDocsReload,
     onFileReload,
@@ -89,14 +90,13 @@ window.loadFile = function () {
                 if (res.colorGroups === null) {
                     return;
                 }
-                if (colorGroupsContainer.colorGroups !== undefined) {
-                    colorGroupsContainer.colorGroups.forEach(cg => { cg.delete() });
+                if (GlobColorGroups !== undefined) {
+                    GlobColorGroups.values().forEach(cg => { cg.delete() });
+                    GlobColorGroups.clear();
                 }
                 onFileReload();
-                colorGroupsContainer.colorGroups = new Array();
                 res.colorGroups.forEach(group => {
                     let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
-                    colorGroupsContainer.colorGroups.push(cg);
                     colorGroupsContainer.appendChild(cg.getHtmlElement());
                 });
                 _loadedColorsFile = res.file;
@@ -116,9 +116,6 @@ window.addColorGroup = function () {
         window.alert("no file loaded");
         return
     }
-    if (colorGroupsContainer.colorGroups === undefined) {
-        colorGroupsContainer.colorGroups = new Array();
-    }
     let cg = new ColorGroup(
         {
             name: "new group",
@@ -128,7 +125,6 @@ window.addColorGroup = function () {
         screenshotViewContainer,
         descContainer
     );
-    colorGroupsContainer.colorGroups.push(cg);
     colorGroupsContainer.appendChild(cg.getHtmlElement());
     cg._renameField.value = cg._groupLabel.textContent;
     cg._groupLabel.replaceWith(cg._renameField);
@@ -137,11 +133,11 @@ window.addColorGroup = function () {
 }
 
 window.saveFileAs = async function () {
-    if (colorGroupsContainer.colorGroups === undefined) {
+    if (GlobColorGroups === undefined) {
         return
     }
     try {
-        let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
+        let arr = Array.from(GlobColorGroups.values()).map((group) => group.toJSON());
         SaveColorsDialog(arr)
             .then((res) => {
                 if (res.error !== null) {
@@ -185,7 +181,7 @@ window.saveFile = function () {
         return
     }
     try {
-        let arr = Array.from(colorGroupsContainer.colorGroups).map((group) => group.toJSON());
+        let arr = Array.from(GlobColorGroups.values().map((group) => group.toJSON()));
         OverwriteColorsFiles(_loadedColorsFile, arr)
         .catch((err) => {
             console.error(err);
