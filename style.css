@@ -19,7 +19,8 @@
 
 .upper-container {
     background-color: green;
-    height: 15vh;
+    height: 10vh;
+    max-height: 10vh;
     width: 90%;
     display: flex;
     align-items: center;
@@ -30,7 +31,8 @@
     background-color: rgb(3, 27, 59);
     display: block;
     width: 90vw;
-    height: 70vh;
+    height: 80vh;
+    max-height: 80vh;
     margin: 0 5%;
 }
 
@@ -79,7 +81,7 @@
 /* color screenshots */
 .screenshot-container-outer {
     overflow: scroll;
-    height: 70%;
+    height: 90%;
     width: 100%;
     max-width: 100%;
 }
@@ -98,7 +100,7 @@
 /* color description */
 .desc-container {
     background-color: orangered;
-    height: 30%;
+    height: 10%;
     width: 100%;
 }
 
@@ -112,7 +114,8 @@
 
 .lower-container {
     background-color: blueviolet;
-    height: 15vh;
+    height: 10vh;
+    max-height: 10vh;
     width: 90vw;
     display: flex;
     justify-content: right;
