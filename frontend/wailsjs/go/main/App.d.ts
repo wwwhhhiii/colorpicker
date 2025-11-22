@@ -10,6 +10,8 @@ export function LoadColorsFile():Promise<main.ColorsFileLoadResult>;
 
 export function OpenFileDialog():Promise<string>;
 
+export function OpenFileExplorer(arg1:string):Promise<void>;
+
 export function OpenImgFileDialog():Promise<string>;
 
 export function OverwriteColorsFiles(arg1:string,arg2:Array<main.ColorGroup>):Promise<void>;

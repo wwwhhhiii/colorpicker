@@ -53,3 +53,60 @@ export class VerticalCurtain {
         return this._curtainDiv;
     }
 }
+
+export class Btn {
+    constructor(onpressedFunc, txt) {
+        this._html = document.createElement("btn");
+        this._html.className = "generic-btn";
+        this._html.textContent = txt;
+
+        this._pressfunc = onpressedFunc;
+    }
+}
+
+export class Dialog {
+    constructor(txt, btn1, btn2, w = 150, h = 100) {
+        this._btn1 = btn1;
+        this._btn2 = btn2;
+        this._label = document.createElement("label");
+        this._label.textContent = txt;
+        this._btnDiv = document.createElement("div");
+        
+        this._html = document.createElement("div");
+        this._html.className = "genecric-dialog";
+        
+        this._html.appendChild(this._label);
+        this._btnDiv.appendChild(this._btn1._html);
+        this._btnDiv.appendChild(this._btn2._html);
+        this._html.appendChild(this._btnDiv);
+
+        this._html.style.display = "none";
+        this._html.style.width = w + "px";
+        this._html.style.height = h + "px";
+        this._html.style.top = ((window.innerHeight/2) - (this._html.offsetHeight/2)) + 'px';
+        this._html.style.left = ((window.innerWidth/2) - (this._html.offsetWidth/2)) + 'px';
+        this._html.style.position = "absolute";
+        this._html.style.backgroundColor = "grey";
+
+        this._btn1._html.onclick = () => {
+            this._btn1._pressfunc();
+            this.Destroy();
+        }
+        this._btn2._html.onclick = () => {
+            this._btn2._pressfunc();
+            this.Destroy();
+        }
+    }
+
+    Show() {
+        this._html.style.display = "block";
+    }
+
+    Hide() {
+        this._html.style.display = "none";
+    }
+
+    Destroy() {
+        this._html.parentNode.removeChild(this._html);
+    }
+}

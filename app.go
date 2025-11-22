@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -637,4 +638,8 @@ func (a *App) ExportImgDialog(imgpath string) (string, error) {
 		return "", err
 	}
 	return savedImgFilename, err
+}
+
+func (a *App) OpenFileExplorer(dir string) error {
+	return exec.Command("explorer", dir).Start()
 }

@@ -18,6 +18,10 @@ export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
 
+export function OpenFileExplorer(arg1) {
+  return window['go']['main']['App']['OpenFileExplorer'](arg1);
+}
+
 export function OpenImgFileDialog() {
   return window['go']['main']['App']['OpenImgFileDialog']();
 }

@@ -8,6 +8,7 @@ import {
     OpenImgFileDialog,
     StashImgByFilename,
     ExportImgDialog,
+    OpenFileExplorer,
 } from "../wailsjs/go/main/App";
 import {
     GlobColorGroups,
@@ -17,6 +18,10 @@ import {
     restoreColors,
     getSelectedColorElement,
 } from './elements';
+import {
+    Btn,
+    Dialog,
+} from './utils'
 
 const APP_SOURCE_HTML = 'page.html';
 const APP_SOURCE_CSS = 'style.css';
@@ -229,8 +234,15 @@ window.exportImg = function() {
         window.alert("color has no image");
         return
     }
-    ExportImgDialog(imgFilepath);
-    window.alert("Saved");
+    ExportImgDialog(imgFilepath).then((savedFile) => {
+        let acceptBtn = new Btn(() => {
+            OpenFileExplorer(savedFile.substring(0, savedFile.lastIndexOf("\\") + 1))
+        }, "open");
+        let cancelBtn = new Btn(() => {}, "close");
+        let dial = new Dialog("Image saved", acceptBtn, cancelBtn, 150, 100)
+        document.getElementById("app-container").appendChild(dial._html);
+        dial.Show();
+    })
 };
 
 (async function () {

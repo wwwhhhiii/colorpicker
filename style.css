@@ -11,6 +11,7 @@
 }
 
 .app-container {
+    position: relative;
     width: 100vw;
     height: 100vh;
     justify-content: center;
@@ -133,6 +134,11 @@
     margin: 0 0 0 20px;
     padding: 0 8px;
     cursor: pointer;
+}
+
+.generic-dialog {
+    display: flex;
+    justify-content: center;
 }
 
 .open-file-btn {
