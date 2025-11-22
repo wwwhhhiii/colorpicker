@@ -617,3 +617,24 @@ func (a *App) SaveColorsDialog(colors []ColorGroup) SaveColorsDialogResult {
 	}
 	return SaveColorsDialogResult{filename, nil}
 }
+
+func (a *App) ExportImgDialog(imgpath string) (string, error) {
+	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
+	if err != nil {
+		return "", err
+	}
+	origImgExt := filepath.Ext(imgpath)
+	src, err := os.Open(imgpath)
+	if err != nil {
+		return "", err
+	}
+	savedImgFilename := fmt.Sprintf("%s%s", filename, origImgExt)
+	dst, err := os.Create(savedImgFilename)
+	if err != nil {
+		return "", err
+	}
+	if _, err = io.Copy(dst, src); err != nil {
+		return "", err
+	}
+	return savedImgFilename, err
+}

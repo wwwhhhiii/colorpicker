@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function ColorsBackupRestore():Promise<Array<main.ColorGroup>>;
 
+export function ExportImgDialog(arg1:string):Promise<string>;
+
 export function LoadColorsFile():Promise<main.ColorsFileLoadResult>;
 
 export function OpenFileDialog():Promise<string>;

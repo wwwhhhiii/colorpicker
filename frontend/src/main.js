@@ -7,6 +7,7 @@ import {
     OverwriteColorsFiles,
     OpenImgFileDialog,
     StashImgByFilename,
+    ExportImgDialog,
 } from "../wailsjs/go/main/App";
 import {
     GlobColorGroups,
@@ -196,7 +197,7 @@ window.saveFile = function () {
 window.selectImg = function() {
     let selectedElem = getSelectedColorElement();
     if (selectedElem === null) {
-        window.alert("select element for image");
+        window.alert("select element to add image");
         return
     }
     // copy img to stash then set src path from stashed img
@@ -215,6 +216,21 @@ window.selectImg = function() {
         console.error(err);
         window.alert(`critical error: ${err}`);
     });
+};
+
+window.exportImg = function() {
+    let selectedElem = getSelectedColorElement();
+    if (selectedElem === null) {
+        window.alert("select color to export image from");
+        return
+    }
+    let imgFilepath = selectedElem.getColorView().getImgFilepath();
+    if (imgFilepath === null) {
+        window.alert("color has no image");
+        return
+    }
+    ExportImgDialog(imgFilepath);
+    window.alert("Saved");
 };
 
 (async function () {

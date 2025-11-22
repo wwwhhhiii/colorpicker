@@ -6,6 +6,10 @@ export function ColorsBackupRestore() {
   return window['go']['main']['App']['ColorsBackupRestore']();
 }
 
+export function ExportImgDialog(arg1) {
+  return window['go']['main']['App']['ExportImgDialog'](arg1);
+}
+
 export function LoadColorsFile() {
   return window['go']['main']['App']['LoadColorsFile']();
 }
