@@ -321,7 +321,23 @@ parseLoop:
 	return groups, nil
 }
 
-func createBackupFile(f *os.File) error {
+func createBackupFiles(f *os.File) error {
+	// original file backup that should be save only once
+	origbkpname := filepath.Join(
+		filepath.Dir(f.Name()),
+		fmt.Sprintf("%s.orig", filepath.Base(f.Name())),
+	)
+	if _, err := os.Stat(origbkpname); errors.Is(err, os.ErrNotExist) {
+		outorig, err := os.Create(origbkpname)
+		if err != nil {
+			return err
+		}
+		defer outorig.Close()
+		if _, err = io.Copy(outorig, f); err != nil {
+			return err
+		}
+	}
+	// per-openj backup
 	bkpname := filepath.Join(
 		filepath.Dir(f.Name()),
 		fmt.Sprintf("%s.bkp", filepath.Base(f.Name())))
@@ -330,8 +346,7 @@ func createBackupFile(f *os.File) error {
 		return err
 	}
 	defer out.Close()
-	_, err = io.Copy(out, f)
-	if err != nil {
+	if _, err = io.Copy(out, f); err != nil {
 		return err
 	}
 	err = out.Sync()
@@ -399,12 +414,13 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		// create file backup just in case
-		file.Seek(0, io.SeekStart)
-		err = createBackupFile(file)
-		if err != nil {
-			return nil, err
-		}
+	}
+	file, err := os.Open(selectedFile)
+	if err != nil {
+		return nil, err
+	}
+	if err = createBackupFiles(file); err != nil {
+		return nil, err
 	}
 	// store in-memory backup to restore original colors on demand
 	bkpColorGroups = colorGroups
