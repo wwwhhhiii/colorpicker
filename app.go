@@ -361,6 +361,21 @@ func (a *App) ColorsBackupRestore() ([]ColorGroup, error) {
 	return bkpColorGroups, nil
 }
 
+// return colors saved on disk in a backup file (colors before the very first colors file opening)
+func (a *App) ColorBackupRestoreOrign(colorFilename string) ([]ColorGroup, error) {
+	file, err := os.Open(fmt.Sprintf("%s.orig", colorFilename))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	colorGroups, err := parseColorFile(reader)
+	if err != nil {
+		return nil, err
+	}
+	return colorGroups, nil
+}
+
 type ColorsFileLoadResult struct {
 	ColorGroups []ColorGroup `json:"colorGroups"`
 	LoadedFile  string       `json:"file"`

@@ -4,6 +4,7 @@ import {
     LoadColorsFile,
     SaveColorsDialog,
     ColorsBackupRestore,
+    ColorBackupRestoreOrign,
     OverwriteColorsFiles,
     OpenImgFileDialog,
     StashImgByFilename,
@@ -178,6 +179,25 @@ window.restoreColors = function() {
         console.error(err);
         window.alert(`critical error: ${err}`);
     }
+}
+
+window.restoreOrigColors = function() {
+    if (_loadedColorsFile === null) {
+        return
+    }
+    ColorBackupRestoreOrign(_loadedColorsFile)
+    .then((origColorGroups) => {
+        if (origColorGroups === null) {
+            return
+        }
+        console.log("restoring...")
+        restoreColors(origColorGroups);
+        console.log("restored")
+    })
+    .catch((err) => {
+        console.error(err);
+        window.alert(`critical error: ${err}`);
+    })
 }
 
 // overwrite opened file with changes
