@@ -1,3 +1,4 @@
+import { ColorPicker } from "./utils";
 // A reference to currently selected ColorElement object.
 // Used to determine which ColorElement objects to display (description, image, etc.).
 var _selectedColorElement = null;
@@ -146,20 +147,27 @@ class ColorElement {
         let id = window.crypto.randomUUID();
         this.id = id
 
-        this._element = document.createElement("li");
-        this._element.draggable = true;
+        this._element = document.createElement("div");
         this._element.id = id;
         this._element.className = "color-element";
-        this._colorInput = document.createElement("input");
-        this._colorInput.type = "color";
-        this._colorInput.className = "color-input";
-        this._colorInput.value = rgbToHexStr(
-            colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2],
+        this._drag = document.createElement("div");
+        this._drag.style.minHeight = "15px";
+        this._drag.style.cursor = "grab";
+        this._drag.style.backgroundColor = "#cccccc";
+        this._drag.draggable = true;
+        this._element.appendChild(this._drag);
+        this._inner = document.createElement("div");
+        this._inner.style.minHeight = "25px";
+        this._inner.style.cursor = "pointer";
+        this._element.appendChild(this._inner);
+        this._colorInput = new ColorPicker();
+        this._colorInput.setRGBA(
+            colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2], colorGO.alpha,
         )
-        this._element.appendChild(this._colorInput);
+        this._inner.appendChild(this._colorInput.htmlElement());
         this._removeBtn = document.createElement("button");
         this._removeBtn.textContent = "✖";
-        this._element.append(this._removeBtn);
+        this._inner.append(this._removeBtn);
         this._removeBtn.addEventListener('click', (e) => {
             if (window.confirm("удалить цвет?")) {
                 this._colorGroup.removeColorElement(this);
@@ -200,7 +208,7 @@ class ColorElement {
             _selectedColorElement = this;
             _selectedColorElement._element.style.backgroundColor = '#f003fc';
         })
-        this._element.addEventListener('dragstart', (e) => {
+        this._drag.addEventListener('dragstart', (e) => {
             _draggedColorObj = this;
         });
     }
@@ -222,10 +230,12 @@ class ColorElement {
     }
 
     toJSON() {
-        let res = hexStrToRGB(this._colorInput.value)
+        let r = this._colorInput.red;
+        let g = this._colorInput.green;
+        let b = this._colorInput.blue;
         return {
-            rgb: [res.r, res.g, res.b],
-            alpha: 1,  // TODO change it
+            rgb: [r, g, b],
+            alpha: this._colorInput.alpha,
             description: this._colorView.getColorTextarea().value,
             img: this._colorView.getImgFilepath(),
         }
@@ -363,6 +373,7 @@ export class ColorGroup {
                         description: "",
                         img: "",
                         rgb: [0, 0, 0],
+                        alpha: 1,
                     },
                     this._screenshotViewContainer,
                     this._descrContainer,
@@ -482,21 +493,6 @@ export function onFileReload() {
     _selectedColorElement = null;
 }
 
-function rgbToHexStr(r, g, b) {
-    let rhex = r.toString(16).padStart(2, '0');
-    let ghex = g.toString(16).padStart(2, '0');
-    let bhex = b.toString(16).padStart(2, '0');
-    return `#${rhex}${ghex}${bhex}`
-}
-
-function hexStrToRGB(hexstr) {
-    return {
-        r: parseInt(hexstr.substr(1, 2), 16),
-        g: parseInt(hexstr.substr(3, 2), 16),
-        b: parseInt(hexstr.substr(5, 2), 16),
-    }
-}
-
 // color groups may be renamed, but their names at file load time
 // remain unchanged (colorGroup._name), so global colors group map
 // can be used to refer to them the same as they were not renamed
@@ -506,10 +502,11 @@ export function restoreColors(origColorGroups) {
         if (cg === null) { return };
         for (let i = 0; i <= cg.getColorElements().length - 1; i++) {
             let origColor = origGroup.colors[i];
-            cg.getColorElements()[i].getColorInput().value = rgbToHexStr(
+            cg.getColorElements()[i].getColorInput().setRGBA(
                 origColor.rgb[0],
                 origColor.rgb[1],
                 origColor.rgb[2],
+                origColor.alpha,
             )
         }
     })

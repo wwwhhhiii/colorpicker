@@ -255,6 +255,9 @@ window.exportImg = function() {
         return
     }
     ExportImgDialog(imgFilepath).then((savedFile) => {
+        if (savedFile === ".jpg") {
+            return;
+        }
         let acceptBtn = new Btn(() => {
             OpenFileExplorer(savedFile.substring(0, savedFile.lastIndexOf("\\") + 1))
         }, "open");
