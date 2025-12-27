@@ -230,12 +230,10 @@ class ColorElement {
     }
 
     toJSON() {
-        let r = this._colorInput.red;
-        let g = this._colorInput.green;
-        let b = this._colorInput.blue;
+        let [r, g, b, a] = this._colorInput.getRGBA();
         return {
             rgb: [r, g, b],
-            alpha: this._colorInput.alpha,
+            alpha: a,
             description: this._colorView.getColorTextarea().value,
             img: this._colorView.getImgFilepath(),
         }
@@ -260,7 +258,7 @@ export class ColorGroup {
         this._groupContainer.className = "color-group-container";
         this._groupContainer.name =  this._name;
         
-        this._groupMenu = document.createElement("menu");
+        this._groupMenu = document.createElement("div");
         this._groupMenu.id =  this._name;
         this._groupMenu.name =  this._name;
         this._groupMenu.className = "colors-group-menu";

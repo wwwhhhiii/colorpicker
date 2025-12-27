@@ -45,7 +45,7 @@
 }
 
 .groups-container .colors-groups-menu {
-    margin: 2% 10%;
+    margin: 2% 0%;
 }
 
 .groups-container .groups-content {
@@ -70,8 +70,12 @@
 }
 
 .color-element {
-    border-color: black;
+    /* border-color: black; */
     border-style: solid;
+    display: block;
+    box-sizing: border-box;
+    outline: black solid 2px;
+    border: rgb(3, 27, 59) solid 3px;
 }
 
 .screenshot-and-desc-container {
@@ -81,6 +85,26 @@
     width: 75%;
 }
 
+.color-wrapper {
+    background-color: black;
+    visibility: visible;
+    display: inline-block;
+}
+
+.color-picker {
+    opacity: 0;
+    box-sizing: border-box;
+    display: block;
+    pointer-events: initial;
+    visibility: visible;
+}
+
+.color-picker-alpha {
+    filter: grayscale(100%);
+    box-sizing: border-box;
+    display: block;
+    visibility: visible;
+}
 
 
 /* color screenshots */
