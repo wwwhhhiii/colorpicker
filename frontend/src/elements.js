@@ -159,6 +159,8 @@ class ColorElement {
         this._inner = document.createElement("div");
         this._inner.style.minHeight = "25px";
         this._inner.style.cursor = "pointer";
+        this._inner.style.zIndex = "0";
+        this._inner.style.position = "relative";
         this._element.appendChild(this._inner);
         this._colorInput = new ColorPicker();
         this._colorInput.setRGBA(

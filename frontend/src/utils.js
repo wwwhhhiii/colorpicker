@@ -127,13 +127,14 @@ export class ColorPicker {
 
         this._wrapper = document.createElement("div");
         this._wrapper.className = "color-wrapper";
-        // this._bg = document.createElement("div");
-        // this._wrapper.appendChild(this._bg);
-        // this._bg.style.backgroundColor = "white";
-        // this._bg.style.position = "absolute";
-        // this._bg.style.height = "100%";
-        // this._bg.style.width = "100%";
-        // this._bg.style.zIndex = "-1";
+        let bg = document.createElement("div");
+        this._wrapper.appendChild(bg);
+        bg.style.backgroundColor = "white";
+        bg.style.position = "absolute";
+        bg.style.width = "100%";
+        bg.style.height = "100%";
+        bg.style.zIndex = "-1";
+        bg.style.boxSizing = "border-box";
 
         this._colorpicker = document.createElement("input");
         this._colorpicker.type = "color";

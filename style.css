@@ -58,6 +58,7 @@
 
 .color-group-container {
     background-color: darkgrey;
+    position: relative;
 }
 
 .color-group-label {
@@ -89,6 +90,7 @@
     background-color: black;
     visibility: visible;
     display: inline-block;
+    position: relative;
 }
 
 .color-picker {
