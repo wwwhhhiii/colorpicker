@@ -171,6 +171,9 @@ class ColorElement {
         this._removeBtn.addEventListener('click', (e) => {
             if (window.confirm("удалить цвет?")) {
                 this._colorGroup.removeColorElement(this);
+                if (this === _selectedColorElement) {
+                    _selectedColorElement = null;
+                }
                 this.delete();
             }
             e.stopPropagation();
