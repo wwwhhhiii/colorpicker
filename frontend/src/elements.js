@@ -166,12 +166,13 @@ class ColorElement {
         this._colorInput.setRGBA(
             colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2], colorGO.alpha,
         )
+        this._colorInput.className = "color-picker";
         this._inner.appendChild(this._colorInput.htmlElement());
         this._removeBtn = document.createElement("button");
         this._removeBtn.textContent = "✖";
         this._inner.append(this._removeBtn);
         this._removeBtn.addEventListener('click', (e) => {
-            if (window.confirm("удалить цвет?")) {
+            if (window.confirm("удалить состояние?")) {
                 this._colorGroup.removeColorElement(this);
                 if (this === _selectedColorElement) {
                     _selectedColorElement = null;
@@ -316,7 +317,7 @@ export class ColorGroup {
         renameField.addEventListener("keydown", (e) => {
             if (e.key == "Enter") {
                 if (GlobColorGroups.has(renameField.value)) {
-                    window.alert("Группа с таким именем уже существует");
+                    window.alert("Цвет с таким именем уже существует");
                     return
                 }
                 if (renameField.value !== null && renameField != "") {
@@ -331,20 +332,41 @@ export class ColorGroup {
         renameField.addEventListener("focusout", (e) => {
             renameField.replaceWith(groupLabel);
             renameField.value = "";
-            // e.preventDefault();
-            // e.stopPropagation();
         })
         return renameField
     }
 
     _createDropDownBtn(groupContainer, groupLabel, renameField) {
         let ctxBtn = document.createElement("button");
+        ctxBtn.style.position = "relative";
         ctxBtn.textContent = "▼";
+        ctxBtn._menuOpened = false;
 
         let dropMenu = document.createElement("div");
-        dropMenu.style.position = "absolute";
+        dropMenu.style.position = "fixed";
+        dropMenu.style.zIndex = "2";
         dropMenu.style.display = "none";
         dropMenu.style.width = "120px";
+
+        groupContainer.appendChild(dropMenu);
+
+        let openDropMenu = (x, y) => {
+            if (dropMenu.style.display == "none") {
+                // let brect = ctxBtn.getBoundingClientRect();
+                dropMenu.style.left = `${x}px`;
+                dropMenu.style.top = `${y}px`;
+                dropMenu.style.display = "block";
+            }
+        }
+        let closeDropMenu = () => {
+            if (dropMenu.style.display != "none") {
+                dropMenu.style.display = "none";
+            }
+        }
+        dropMenu.addEventListener("mouseleave", () => { closeDropMenu() });
+        ctxBtn.addEventListener("click", (e) => {
+            dropMenu.style.display == "none" ? openDropMenu(e.clientX, e.clientY) : closeDropMenu();
+        });
 
         // rename btn
         let renameBtn = document.createElement("button");
@@ -352,23 +374,22 @@ export class ColorGroup {
         renameBtn.style.width = "100%";
         dropMenu.appendChild(renameBtn);
 
-        renameBtn.addEventListener("click", (evt) => {
-            dropMenu.style.display = "none";
+        renameBtn.addEventListener("click", () => {
+            closeDropMenu();
             renameField.value = groupLabel.textContent;
             groupLabel.replaceWith(renameField);
             renameField.focus();
             renameField.select();
-            // evt.stopPropagation();
         })
 
         // add color button
         let addColorBtn = document.createElement("button");
-        addColorBtn.textContent = "добавить цвет";
+        addColorBtn.textContent = "добавить состояние";
         addColorBtn.style.width = "100%";
         dropMenu.appendChild(addColorBtn);
 
         addColorBtn.addEventListener("click", (evt) => {
-            dropMenu.style.display = "none";
+            closeDropMenu();
             this.addColorElement(
                 new ColorElement(
                     this,
@@ -382,7 +403,6 @@ export class ColorGroup {
                     this._descrContainer,
                 )
             );
-            // evt.stopPropagation();
         })
 
         // delete group button
@@ -391,26 +411,12 @@ export class ColorGroup {
         delGroupBtn.style.width = "100%";
         dropMenu.appendChild(delGroupBtn);
 
-        delGroupBtn.addEventListener("click", (evt) => {
-            dropMenu.style.display = "none";
-            if (window.confirm("удалить группу?")) {
+        delGroupBtn.addEventListener("click", () => {
+            closeDropMenu();
+            if (window.confirm("удалить цвет?")) {
                 this.delete();
             }
         });
-
-        groupContainer.appendChild(dropMenu);
-
-        dropMenu.onmouseleave = (_) => {
-            dropMenu.style.display = "none";
-        }
-        ctxBtn.addEventListener("click", (evt) => {
-            dropMenu.style.display = "block";
-            let brect = ctxBtn.getBoundingClientRect();
-            dropMenu.style.left = `${brect.left}px`;
-            dropMenu.style.top = `${brect.bottom}px`;
-            // evt.stopPropagation();
-        })
-
         return ctxBtn
     }
 
@@ -421,12 +427,11 @@ export class ColorGroup {
         label.textContent = menu.name;
 
         // fold/unfold child elements with double click
-        label.onclick = function (e) {
+        label.onclick = function () {
             for (let color of menu.getElementsByClassName("color-element")) {
                 color.style.display = menu.elemsHidden ? 'block' : 'none';
             }
             menu.elemsHidden = !menu.elemsHidden;
-            // e.stopPropagation();
         }
 
         // rename label with doublelick
