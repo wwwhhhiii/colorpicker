@@ -1,34 +1,34 @@
-<div class="app-container", id="app-container">
-    <div class="upper-container">
-        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+<!--
+IMPORTANT:
+ - don't edit id's that are surrounded with '__'
+ - don't edit `onclick` on buttons
+-->
+
+<div id="__app-container__">
+    <div id="__upper-container__">
         <button class="generic-btn open-file-btn" onclick="loadFile()">Select file</button>
         <button class="generic-btn reload-style-btn" onclick="reloadDynDocs()">Reload style</button>
         <button class="generic-btn select-img-btn" onclick="selectImg()">Select image</button>
         <button class="generic-btn" onclick="exportImg()">Export image</button>
-        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
     </div>
-    <div class="main-container">
-        <div id="__groups-container" class="groups-container">
-            <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+    <div id="__main-container__">
+        <div id="__groups-container__">
             <button id="add-group-btn" class="generic-btn add-group-btn" onclick="addColorGroup()">+</button>
-            <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
-            <div id="__groups-content" class="groups-content"></div>
+            <div id="__groups-content__"></div>
         </div>
-        <div class="screenshot-and-desc-container">
-            <div id="__screenshot-view-container" class="screenshot-container-outer">
-                <!--  -->
+        <div id="__screenshot-and-desc-container__">
+            <div id="__screenshot-view-container__">
+                <!-- images of color instances are loaded here on click -->
             </div>
-            <div id="__desc-container" class="desc-container">
-                <!--  -->
+            <div id="__desc-container__">
+                <!-- description fields of color instances are loaded here on click -->
             </div>
         </div>
     </div>
-    <div class="lower-container">
-        <!-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DON'T TOUCH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ -->
+    <div id="__lower-container__">
         <button class="generic-btn" onclick="saveFileAs()">Save as</button>
         <button class="generic-btn" onclick="saveFile()">Save file</button>
         <button class="generic-btn" onclick="restoreColors()">Restore colors</button>
         <button class="generic-btn" onclick="restoreOrigColors()">Restore original</button>
-        <!-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ DON'T TOUCH ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ -->
     </div>
 </div>

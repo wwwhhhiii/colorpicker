@@ -46,17 +46,17 @@ window.reloadDynDocs = async function() {
     .then(htmlContent => async function () {
         // inject .html
         appElement.innerHTML = htmlContent;
-        colorGroupsContainer = document.getElementById("__groups-content");
+        colorGroupsContainer = document.getElementById("__groups-content__");
         if (colorGroupsContainer === null) {
-            throw new Error("'__groups-content' element not found");
+            throw new Error(`element with id '__groups-content__' is not found in '${APP_SOURCE_HTML}'`);
         }
-        screenshotViewContainer = document.getElementById("__screenshot-view-container");
+        screenshotViewContainer = document.getElementById("__screenshot-view-container__");
         if (screenshotViewContainer === null) {
-            throw new Error("'__screenshot-view-container' element not found");
+            throw new Error(`element with id '__screenshot-view-container__' is not found in '${APP_SOURCE_HTML}'`);
         }
-        descContainer = document.getElementById("__desc-container");
+        descContainer = document.getElementById("__desc-container__");
         if (descContainer === null) {
-            throw new Error("'__desc-container' element not found");
+            throw new Error(`element with id '__desc-container__' is not found in '${APP_SOURCE_HTML}'`);
         }
         onDocsReload();
         _loadedColorsFile = null;
@@ -125,7 +125,7 @@ window.addColorGroup = function () {
     }
     let cg = new ColorGroup(
         {
-            name: "new group",
+            name: "Новый цвет",
             colorspace: 0,
             colors: [],
         },
