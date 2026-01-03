@@ -343,16 +343,15 @@ export class ColorGroup {
         ctxBtn._menuOpened = false;
 
         let dropMenu = document.createElement("div");
+        dropMenu.className = "drop-menu";
         dropMenu.style.position = "fixed";
-        dropMenu.style.zIndex = "2";
         dropMenu.style.display = "none";
-        dropMenu.style.width = "120px";
+        dropMenu.style.width = "200px";
 
         groupContainer.appendChild(dropMenu);
 
         let openDropMenu = (x, y) => {
             if (dropMenu.style.display == "none") {
-                // let brect = ctxBtn.getBoundingClientRect();
                 dropMenu.style.left = `${x}px`;
                 dropMenu.style.top = `${y}px`;
                 dropMenu.style.display = "block";
@@ -370,9 +369,11 @@ export class ColorGroup {
 
         // rename btn
         let renameBtn = document.createElement("button");
+        renameBtn.className = "menu-item";
         renameBtn.textContent = "переименовать";
         renameBtn.style.width = "100%";
         dropMenu.appendChild(renameBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
 
         renameBtn.addEventListener("click", () => {
             closeDropMenu();
@@ -384,9 +385,11 @@ export class ColorGroup {
 
         // add color button
         let addColorBtn = document.createElement("button");
+        addColorBtn.className = "menu-item";
         addColorBtn.textContent = "добавить состояние";
         addColorBtn.style.width = "100%";
         dropMenu.appendChild(addColorBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
 
         addColorBtn.addEventListener("click", (evt) => {
             closeDropMenu();
@@ -407,13 +410,15 @@ export class ColorGroup {
 
         // delete group button
         let delGroupBtn = document.createElement("button");
+        delGroupBtn.className = "menu-item";
         delGroupBtn.textContent = "удалить";
         delGroupBtn.style.width = "100%";
         dropMenu.appendChild(delGroupBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
 
         delGroupBtn.addEventListener("click", () => {
             closeDropMenu();
-            if (window.confirm("удалить цвет?")) {
+            if (window.confirm("удалить состояние?")) {
                 this.delete();
             }
         });

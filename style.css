@@ -116,6 +116,50 @@
     visibility: visible;
 }
 
+.drop-menu {
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 1000;
+    transform: scale(0.95);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.drop-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    color: #2d3748;
+    font-size: 14px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.menu-item:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateX(5px);
+}
+
+.menu-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 6px 0;
+}
+
 .color-picker-alpha {
     filter: grayscale(100%);
     box-sizing: border-box;
