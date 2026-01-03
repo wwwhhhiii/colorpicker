@@ -48,9 +48,10 @@
     margin: 2% 0%;
 }
 
-#__groups-container__ #__groups-content__ {
+#__groups-content__ {
     background-color: orchid;
     overflow-y: scroll;
+    overflow-x: hidden;
     width: 100%;
     height: 90%;
     bottom: 0;
@@ -73,10 +74,24 @@
 .color-element {
     /* border-color: black; */
     border-style: solid;
-    display: block;
+    display: inline-block;
     box-sizing: border-box;
     outline: black solid 2px;
     border: rgb(3, 27, 59) solid 3px;
+
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.color-element:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.color-element:focus {
+    outline: 3px solid rgba(66, 153, 225, 0.5);
+    outline-offset: 2px;
 }
 
 #__screenshot-and-desc-container__ {
