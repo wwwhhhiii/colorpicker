@@ -170,9 +170,7 @@ export class ColorPicker {
     setRGBA(r, g, b, a) {
         this._colorpicker.value = RGBToHEX(r, g, b);
         this._alpharange.value = a * 255;
-        this._wrapper.style.backgroundColor = this._colorpicker.value + (
-            this._alpharange.value ? "" : parseInt(this._alpharange.value * 255).toString(16).padStart(2, "0")
-        );
+        this._wrapper.style.backgroundColor = this._colorpicker.value + parseInt(this._alpharange.value).toString(16).padStart(2, "0");
         
     }
 
@@ -180,6 +178,6 @@ export class ColorPicker {
         let r = parseInt(`0x${this._colorpicker.value.substring(1, 3)}`, 16)
         let g = parseInt(`0x${this._colorpicker.value.substring(3, 5)}`, 16)
         let b = parseInt(`0x${this._colorpicker.value.substring(5, 7)}`, 16)
-        return [r, g, b, this._alpharange.value / 255]
+        return [r, g, b, parseFloat((this._alpharange.value / 255).toFixed(2))]
     }
 }
