@@ -7,6 +7,7 @@ var _selectedColorElement = null;
 export var GlobColorGroups = new Map();
 
 var _draggedColorObj = null;
+var _draggedColorGroup = null;
 
 export function getSelectedColorElement() {
     return _selectedColorElement;
@@ -246,6 +247,188 @@ class ColorElement {
     }
 }
 
+export class SubGroup {
+    constructor(screenshotViewContainer, descrContainer) {
+        this._screenshotViewContainer = screenshotViewContainer;
+        this._descrContainer = descrContainer;
+
+        this._content = document.createElement("div");
+        this._content.className = "subgroup";
+        this._inner = document.createElement("div");
+        this._inner.className = "subgroup-inner";
+        this._content.appendChild(this._inner);
+        
+        this._label = document.createElement("label");
+        this._content.insertBefore(this._label, this._inner);
+        this._label.className = "subgroup-label";
+        this._label.addEventListener('click', () => {
+            this._inner.style.display = this._inner.style.display == 'block' ? 'none' : 'block';
+        });
+        this._label.addEventListener('dblclick', () => {
+            this.activateRename();
+        });
+        this._renameField = this._createRenameField(this._label);
+
+        this._content.addEventListener('dragenter', (e) => { e.preventDefault() });
+        this._content.addEventListener('dragover', (e) => { e.preventDefault() });
+        this._content.addEventListener('drop', (e) => {
+            if (_draggedColorGroup === null) { return };
+            try {
+                this.addColorGroup(_draggedColorGroup);
+            }
+            finally {
+                _draggedColorGroup = null;
+            }
+        });
+
+        this._content.insertBefore(
+            this._createDropDownBtn(
+                this._content,
+                this._label,
+                this._renameField,
+            ),
+            this._inner,
+        );
+    }
+
+    activateRename() {
+        this._renameField.value = this._label.textContent;
+        this._label.replaceWith(this._renameField);
+        this._renameField.focus();
+        this._renameField.select();
+    }
+
+    setName(s) {
+        this._label.textContent = s;
+    }
+
+    // adds colorGroup to subgroup
+    addColorGroup(cg) {
+        this._inner.appendChild(cg.getHtmlElement());
+    }
+
+    getHtmlElement() {
+        return this._content;
+    }
+
+    // TODO make this generic function and reuse across classes
+    _createRenameField(label) {
+        let renameField = document.createElement("input");
+        renameField.type = "text";
+        renameField.addEventListener("keydown", (e) => {
+            if (e.key == "Enter") {
+                // TODO add unique group name check
+                if (renameField.value !== null && renameField != "" && renameField !== undefined) {
+                    label.textContent = renameField.value;
+                }
+                renameField.replaceWith(label);
+            }
+            if (e.key == "Escape") {
+                renameField.replaceWith(label);
+            }
+        })
+        renameField.addEventListener("focusout", (e) => {
+            renameField.replaceWith(label);
+            renameField.value = "";
+        })
+        return renameField
+    }
+
+    _createDropDownBtn(container, label, renameField) {
+        let ctxBtn = document.createElement("button");
+        ctxBtn.style.position = "relative";
+        ctxBtn.textContent = "▼";
+        ctxBtn._menuOpened = false;
+
+        let dropMenu = document.createElement("div");
+        dropMenu.className = "drop-menu";
+        dropMenu.style.position = "fixed";
+        dropMenu.style.display = "none";
+        dropMenu.style.width = "200px";
+
+        container.appendChild(dropMenu);
+
+        let openDropMenu = (x, y) => {
+            if (dropMenu.style.display == "none") {
+                dropMenu.style.left = `${x}px`;
+                dropMenu.style.top = `${y}px`;
+                dropMenu.style.display = "block";
+            }
+        }
+        let closeDropMenu = () => {
+            if (dropMenu.style.display != "none") {
+                dropMenu.style.display = "none";
+            }
+        }
+        dropMenu.addEventListener("mouseleave", () => { closeDropMenu() });
+        ctxBtn.addEventListener("click", (e) => {
+            dropMenu.style.display == "none" ? openDropMenu(e.clientX, e.clientY) : closeDropMenu();
+        });
+
+        // rename btn
+        let renameBtn = document.createElement("button");
+        renameBtn.className = "menu-item";
+        renameBtn.textContent = "переименовать";
+        renameBtn.style.width = "100%";
+        dropMenu.appendChild(renameBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+
+        renameBtn.addEventListener("click", () => {
+            closeDropMenu();
+            renameField.value = label.textContent;
+            label.replaceWith(renameField);
+            renameField.focus();
+            renameField.select();
+        })
+
+        // add color button
+        let addColorBtn = document.createElement("button");
+        addColorBtn.className = "menu-item";
+        addColorBtn.textContent = "добавить цвет";
+        addColorBtn.style.width = "100%";
+        dropMenu.appendChild(addColorBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+
+        addColorBtn.addEventListener("click", (evt) => {
+            closeDropMenu();
+            let cg = new ColorGroup(
+                {
+                    name: "New color",
+                    colorspace: 0,
+                    colors: [],
+                },
+                this._screenshotViewContainer,
+                this._descrContainer,
+            )
+            this._content.appendChild(cg.getHtmlElement());
+            cg.activateRename();
+        })
+
+        // delete group button
+        let delGroupBtn = document.createElement("button");
+        delGroupBtn.className = "menu-item";
+        delGroupBtn.textContent = "удалить";
+        delGroupBtn.style.width = "100%";
+        dropMenu.appendChild(delGroupBtn);
+        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+
+        delGroupBtn.addEventListener("click", () => {
+            closeDropMenu();
+            if (window.confirm("удалить подгруппу и цвета?")) {
+                this.delete();
+            }
+        });
+        return ctxBtn
+    }
+
+    delete() {
+        for (let cg of this._inner.getElementsByClassName("color-container")) {
+            cg.delete();
+        }
+        this._content.remove();
+    }
+}
+
 // A convenicence object responsible for initalization and providing API for
 // "color group": a set of several ColorElements. May have 0 to N ColorElements.
 // Its name is considered to be unique. Many app's critical logic parts
@@ -262,6 +445,17 @@ export class ColorGroup {
 
         this._content = document.createElement("div");
         this._content.className = "color-content";
+
+        this._drag = document.createElement("div");
+        this._drag.style.minHeight = "15px";
+        this._drag.style.cursor = "grab";
+        this._drag.style.backgroundColor = "#cccccc";
+        this._drag.draggable = true;
+        this._content.appendChild(this._drag);
+        this._drag.addEventListener('dragstart', (e) => {
+            _draggedColorGroup = this;
+        });
+
         this._groupContainer = document.createElement("div");
         this._content.appendChild(this._groupContainer);
         this._groupContainer.className = "color-container";
@@ -278,11 +472,16 @@ export class ColorGroup {
         this._groupMenu.addEventListener("dragenter", (e) => { e.preventDefault() });
         this._groupMenu.addEventListener("dragover", (e) => { e.preventDefault() });
         this._groupMenu.addEventListener("drop", (e) => {
-            // remove color element from old group
-            _draggedColorObj._colorGroup._colorElements.delete(_draggedColorObj.id);
-            // add color element to new group
-            this.addColorElement(_draggedColorObj);
-            _draggedColorObj = null;
+            if (_draggedColorObj === null) { return };
+            try {
+                // remove color element from old group
+                _draggedColorObj._colorGroup._colorElements.delete(_draggedColorObj.id);
+                // add color element to new group
+                this.addColorElement(_draggedColorObj);
+            }
+            finally {
+                _draggedColorObj = null;
+            };
         });
         
         this._groupLabel = document.createElement("label");
@@ -300,7 +499,7 @@ export class ColorGroup {
 
         let groupColorPicker = new ColorPicker();
         groupColorPicker.setRGBA(0, 0, 0, 1);
-        this._content.insertBefore(groupColorPicker.htmlElement(), this._content.firstChild);
+        this._content.insertBefore(groupColorPicker.htmlElement(), this._groupContainer);
         groupColorPicker._colorpicker.addEventListener("input", () => {
             this._colorElements.forEach((elem, k, m) => {
                 elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
@@ -324,7 +523,7 @@ export class ColorGroup {
 
     delete() {
         this.clearColorElements();
-        this._groupContainer.remove();
+        this._content.remove();
         GlobColorGroups.delete(this._name);
     }
 
@@ -351,6 +550,13 @@ export class ColorGroup {
             renameField.value = "";
         })
         return renameField
+    }
+
+    activateRename() {
+        this._renameField.value = this._groupLabel.textContent;
+        this._groupLabel.replaceWith(this._renameField);
+        this._renameField.focus();
+        this._renameField.select();
     }
 
     _createDropDownBtn(groupContainer, groupLabel, renameField) {
@@ -394,10 +600,7 @@ export class ColorGroup {
 
         renameBtn.addEventListener("click", () => {
             closeDropMenu();
-            renameField.value = groupLabel.textContent;
-            groupLabel.replaceWith(renameField);
-            renameField.focus();
-            renameField.select();
+            this.activateRename();
         })
 
         // add color button
@@ -435,7 +638,7 @@ export class ColorGroup {
 
         delGroupBtn.addEventListener("click", () => {
             closeDropMenu();
-            if (window.confirm("удалить состояние?")) {
+            if (window.confirm("удалить цвет?")) {
                 this.delete();
             }
         });
@@ -457,13 +660,7 @@ export class ColorGroup {
         }
 
         // rename label with doublelick
-        label.ondblclick = function (e) {
-            renameField.value = label.textContent;
-            label.replaceWith(renameField);
-            renameField.focus();
-            renameField.select();
-            // e.stopPropagation();
-        }
+        label.addEventListener('dblclick', () => { this.activateRename() });
 
         return label
     }

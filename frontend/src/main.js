@@ -12,6 +12,7 @@ import {
     OpenFileExplorer,
 } from "../wailsjs/go/main/App";
 import {
+    SubGroup,
     GlobColorGroups,
     ColorGroup,
     onDocsReload,
@@ -102,9 +103,13 @@ window.loadFile = function () {
                     GlobColorGroups.clear();
                 }
                 onFileReload();
+                let defaultSubGroup = new SubGroup();
+                defaultSubGroup.setName("default");
+                colorGroupsContainer.appendChild(defaultSubGroup.getHtmlElement());
                 res.colorGroups.forEach(group => {
                     let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
-                    colorGroupsContainer.appendChild(cg.getHtmlElement());
+                    // TODO read meta and add color group to appropriate subgroup
+                    defaultSubGroup.addColorGroup(cg);
                 });
                 _loadedColorsFile = res.file;
             })
@@ -118,25 +123,15 @@ window.loadFile = function () {
     }
 };
 
-window.addColorGroup = function () {
+window.addSubGroup = function() {
     if (_loadedColorsFile === null) {
         window.alert("no file loaded");
         return
     }
-    let cg = new ColorGroup(
-        {
-            name: "Новый цвет",
-            colorspace: 0,
-            colors: [],
-        },
-        screenshotViewContainer,
-        descContainer
-    );
-    colorGroupsContainer.appendChild(cg.getHtmlElement());
-    cg._renameField.value = cg._groupLabel.textContent;
-    cg._groupLabel.replaceWith(cg._renameField);
-    cg._renameField.focus();
-    cg._renameField.select();
+    let sg = new SubGroup();
+    sg.setName("New group");
+    colorGroupsContainer.appendChild(sg.getHtmlElement());
+    sg.activateRename();
 }
 
 window.saveFileAs = async function () {
