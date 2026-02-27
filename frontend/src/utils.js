@@ -151,11 +151,7 @@ export class ColorPicker {
         this._alpharange.step = 1;
         this._wrapper.appendChild(this._alpharange);
         
-        this._colorpicker.oninput = () => {
-            this._wrapper.style.backgroundColor = this._colorpicker.value + (
-                this._alpharange.value == 255 ? "" : parseInt(this._alpharange.value).toString(16).padStart(2, "0")
-            );
-        };
+        this._colorpicker.oninput = () => { this.updateColorBg() };
 
         this._alpharange.oninput = () => {
             this._wrapper.style.backgroundColor = this._colorpicker.value + (
@@ -168,11 +164,16 @@ export class ColorPicker {
         return this._wrapper;
     }
 
+    updateColorBg() {
+        this._wrapper.style.backgroundColor = this._colorpicker.value + (
+            this._alpharange.value == 255 ? "" : parseInt(this._alpharange.value).toString(16).padStart(2, "0")
+        );
+    }
+
     setRGBA(r, g, b, a) {
         this._colorpicker.value = RGBToHEX(r, g, b);
         this._alpharange.value = a * 255;
         this._wrapper.style.backgroundColor = this._colorpicker.value + parseInt(this._alpharange.value).toString(16).padStart(2, "0");
-        
     }
 
     getRGBA() {

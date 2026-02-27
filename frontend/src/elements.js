@@ -260,7 +260,10 @@ export class ColorGroup {
         // uuid string to ColorElement
         this._colorElements = new Map();
 
+        this._content = document.createElement("div");
+        this._content.className = "color-content";
         this._groupContainer = document.createElement("div");
+        this._content.appendChild(this._groupContainer);
         this._groupContainer.className = "color-container";
         this._groupContainer.name =  this._name;
         
@@ -297,7 +300,7 @@ export class ColorGroup {
 
         let groupColorPicker = new ColorPicker();
         groupColorPicker.setRGBA(0, 0, 0, 1);
-        this._groupContainer.appendChild(groupColorPicker.htmlElement());
+        this._content.insertBefore(groupColorPicker.htmlElement(), this._content.firstChild);
         groupColorPicker._colorpicker.addEventListener("input", () => {
             this._colorElements.forEach((elem, k, m) => {
                 elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
@@ -306,6 +309,7 @@ export class ColorGroup {
         groupColorPicker._alpharange.addEventListener("input", () => {
             this._colorElements.forEach((elem, k, m) => {
                 elem.getColorInput()._alpharange.value = groupColorPicker._alpharange.value;
+                elem.getColorInput().updateColorBg();
             });
         })
         
@@ -465,7 +469,7 @@ export class ColorGroup {
     }
 
     getHtmlElement() {
-        return this._groupContainer;
+        return this._content;
     }
 
     addColorElement(elementObj) {
