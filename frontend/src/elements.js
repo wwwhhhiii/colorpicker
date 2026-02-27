@@ -294,13 +294,26 @@ export class ColorGroup {
         );
         this._groupContainer.appendChild(this._groupLabel);
         this._groupContainer.appendChild(this._groupMenu);
+
+        let groupColorPicker = new ColorPicker();
+        groupColorPicker.setRGBA(0, 0, 0, 1);
+        this._groupContainer.appendChild(groupColorPicker.htmlElement());
+        groupColorPicker._colorpicker.addEventListener("input", () => {
+            this._colorElements.forEach((elem, k, m) => {
+                elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
+            });
+        });
+        groupColorPicker._alpharange.addEventListener("input", () => {
+            this._colorElements.forEach((elem, k, m) => {
+                elem.getColorInput()._alpharange.value = groupColorPicker._alpharange.value;
+            });
+        })
         
         colorGroupGO.colors.forEach(colorGO => {
             this.addColorElement(
                 new ColorElement(this, colorGO, screenshotViewContainer, descrContainer)
-            );
-        })
-
+                );
+            })
         // add color group to global registry
         GlobColorGroups.set(this._name, this);
     }

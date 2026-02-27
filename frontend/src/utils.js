@@ -127,6 +127,7 @@ export class ColorPicker {
 
         this._wrapper = document.createElement("div");
         this._wrapper.className = "color-wrapper";
+        this._wrapper.style.position = "relative";
         let bg = document.createElement("div");
         this._wrapper.appendChild(bg);
         bg.style.backgroundColor = "white";
