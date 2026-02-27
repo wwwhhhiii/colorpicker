@@ -261,7 +261,7 @@ export class ColorGroup {
         this._colorElements = new Map();
 
         this._groupContainer = document.createElement("div");
-        this._groupContainer.className = "color-group-container";
+        this._groupContainer.className = "color-container";
         this._groupContainer.name =  this._name;
         
         this._groupMenu = document.createElement("div");
