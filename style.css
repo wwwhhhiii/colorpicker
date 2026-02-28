@@ -57,41 +57,64 @@
     bottom: 0;
 }
 
+.color-group {
+    background-color: deepskyblue;
+    margin: 2%;
+}
+
+.color-content {
+    margin: 2%;
+    margin-top: 5%;
+}
+
+.color-drag {
+    background-color: #427ef5;
+}
+
+.color-control {
+    background-color: #84e19b;
+}
+
 .color-container {
     background-color: darkgrey;
     position: relative;
 }
 
-.color-group-label {
+.color-label {
     background-color: plum;
     cursor: pointer;
 }
 
-.colors-group-menu {
-    background-color: deepskyblue;
-}
-
-.color-element {
+.color-variant {
     /* border-color: black; */
     border-style: solid;
     display: inline-block;
     box-sizing: border-box;
     outline: black solid 2px;
     border: rgb(3, 27, 59) solid 3px;
+    margin: 1%;
 
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.color-element:hover {
+.color-variant:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.color-element:focus {
+.color-variant:focus {
     outline: 3px solid rgba(66, 153, 225, 0.5);
     outline-offset: 2px;
+}
+
+.color-variant-inner {
+    display: inline;
+}
+
+.color-wrapper {
+    margin: 1%;
 }
 
 #__screenshot-and-desc-container__ {

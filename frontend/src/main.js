@@ -12,9 +12,9 @@ import {
     OpenFileExplorer,
 } from "../wailsjs/go/main/App";
 import {
-    SubGroup,
-    GlobColorGroups,
     ColorGroup,
+    GlobColorGroups,
+    Color,
     onDocsReload,
     onFileReload,
     restoreColors,
@@ -103,12 +103,12 @@ window.loadFile = function () {
                     GlobColorGroups.clear();
                 }
                 onFileReload();
-                let defaultSubGroup = new SubGroup();
+                let defaultSubGroup = new ColorGroup();
                 defaultSubGroup.setName("default");
                 colorGroupsContainer.appendChild(defaultSubGroup.getHtmlElement());
                 res.colorGroups.forEach(group => {
-                    let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
-                    // TODO read meta and add color group to appropriate subgroup
+                    // TODO read meta and add color to appropriate subgroup
+                    let cg = new Color(group, screenshotViewContainer, descContainer);
                     defaultSubGroup.addColorGroup(cg);
                 });
                 _loadedColorsFile = res.file;
@@ -128,7 +128,7 @@ window.addSubGroup = function() {
         window.alert("no file loaded");
         return
     }
-    let sg = new SubGroup();
+    let sg = new ColorGroup();
     sg.setName("New group");
     colorGroupsContainer.appendChild(sg.getHtmlElement());
     sg.activateRename();

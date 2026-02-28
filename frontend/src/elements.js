@@ -6,8 +6,8 @@ var _selectedColorElement = null;
 // and get references to CologGroup objects by their names
 export var GlobColorGroups = new Map();
 
-var _draggedColorObj = null;
-var _draggedColorGroup = null;
+var _draggedColorVariant = null;
+var _draggedColor = null;
 
 export function getSelectedColorElement() {
     return _selectedColorElement;
@@ -135,10 +135,10 @@ class ColorView {
 }
 
 // A convenience object responsible for initialization and providing API for 
-// "color line": ColorGroup member element.
-// Has color input, name. Referes to one ColorGroup at a time.
+// color variant: Color member.
+// Has color input, name. Referes to one Color at a time.
 // Has associated ColorView object that provides visualization for it.
-class ColorElement {
+class ColorVariant {
     constructor(colorGroup, colorGO, screenshotViewContainer, descrContainer) {
         this._colorGroup = colorGroup;
         this._colorView = new ColorView(colorGO.description, colorGO.img);
@@ -150,7 +150,7 @@ class ColorElement {
 
         this._element = document.createElement("div");
         this._element.id = id;
-        this._element.className = "color-element";
+        this._element.className = "color-variant";
         this._drag = document.createElement("div");
         this._drag.style.minHeight = "15px";
         this._drag.style.cursor = "grab";
@@ -158,6 +158,7 @@ class ColorElement {
         this._drag.draggable = true;
         this._element.appendChild(this._drag);
         this._inner = document.createElement("div");
+        this._inner.className = "color-variant-inner";
         this._inner.style.minHeight = "25px";
         this._inner.style.cursor = "pointer";
         this._inner.style.zIndex = "0";
@@ -215,9 +216,8 @@ class ColorElement {
             _selectedColorElement = this;
             _selectedColorElement._element.style.backgroundColor = '#f003fc';
         })
-        this._drag.addEventListener('dragstart', (e) => {
-            _draggedColorObj = this;
-        });
+        this._drag.addEventListener('dragstart', () => { _draggedColorVariant = this });
+        this._drag.addEventListener('dragend', () => { _draggedColorVariant = null });
     }
 
     delete() {
@@ -247,20 +247,22 @@ class ColorElement {
     }
 }
 
-export class SubGroup {
+export class ColorGroup {
     constructor(screenshotViewContainer, descrContainer) {
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
         this._content = document.createElement("div");
-        this._content.className = "subgroup";
+        this._content.className = "color-group";
         this._inner = document.createElement("div");
-        this._inner.className = "subgroup-inner";
+        this._inner.className = "color-group-inner";
+        this._inner.style.display = "block";
         this._content.appendChild(this._inner);
-        
+
         this._label = document.createElement("label");
         this._content.insertBefore(this._label, this._inner);
-        this._label.className = "subgroup-label";
+        this._label.className = "color-group-label";
+        this._label.style.cursor = "pointer";
         this._label.addEventListener('click', () => {
             this._inner.style.display = this._inner.style.display == 'block' ? 'none' : 'block';
         });
@@ -272,12 +274,12 @@ export class SubGroup {
         this._content.addEventListener('dragenter', (e) => { e.preventDefault() });
         this._content.addEventListener('dragover', (e) => { e.preventDefault() });
         this._content.addEventListener('drop', (e) => {
-            if (_draggedColorGroup === null) { return };
+            if (_draggedColor === null) { return };
             try {
-                this.addColorGroup(_draggedColorGroup);
+                this.addColorGroup(_draggedColor);
             }
             finally {
-                _draggedColorGroup = null;
+                _draggedColor = null;
             }
         });
 
@@ -391,7 +393,7 @@ export class SubGroup {
 
         addColorBtn.addEventListener("click", (evt) => {
             closeDropMenu();
-            let cg = new ColorGroup(
+            let cg = new Color(
                 {
                     name: "New color",
                     colorspace: 0,
@@ -430,11 +432,11 @@ export class SubGroup {
 }
 
 // A convenicence object responsible for initalization and providing API for
-// "color group": a set of several ColorElements. May have 0 to N ColorElements.
+// color: a set of several ColorVariants. May have 0 to N ColorVariants.
 // Its name is considered to be unique. Many app's critical logic parts
 // are based on ColorGroup name uniqueness, however the name uniqueness is not
 // guaranteed by the input files design, so it's up to the user to provide correct files.
-export class ColorGroup {
+export class Color {
     constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
@@ -447,78 +449,72 @@ export class ColorGroup {
         this._content.className = "color-content";
 
         this._drag = document.createElement("div");
+        this._drag.className = "color-drag";
         this._drag.style.minHeight = "15px";
         this._drag.style.cursor = "grab";
         this._drag.style.backgroundColor = "#cccccc";
         this._drag.draggable = true;
-        this._content.appendChild(this._drag);
-        this._drag.addEventListener('dragstart', (e) => {
-            _draggedColorGroup = this;
-        });
+        this._drag.addEventListener('dragstart', () => { _draggedColor = this });
 
-        this._groupContainer = document.createElement("div");
-        this._content.appendChild(this._groupContainer);
-        this._groupContainer.className = "color-container";
-        this._groupContainer.name =  this._name;
-        
-        this._groupMenu = document.createElement("div");
-        this._groupMenu.id =  this._name;
-        this._groupMenu.name =  this._name;
-        this._groupMenu.className = "colors-group-menu";
-        this._groupMenu.elemsHidden = false;
-
-        // in order for drop event to be fired
-        // dragenter and dragover events should be cancelled
-        this._groupMenu.addEventListener("dragenter", (e) => { e.preventDefault() });
-        this._groupMenu.addEventListener("dragover", (e) => { e.preventDefault() });
-        this._groupMenu.addEventListener("drop", (e) => {
-            if (_draggedColorObj === null) { return };
-            try {
-                // remove color element from old group
-                _draggedColorObj._colorGroup._colorElements.delete(_draggedColorObj.id);
-                // add color element to new group
-                this.addColorElement(_draggedColorObj);
-            }
-            finally {
-                _draggedColorObj = null;
-            };
-        });
-        
-        this._groupLabel = document.createElement("label");
-        this._renameField = this._createRenameField(this._groupLabel);
-        this._confLabel(this._groupLabel, this._groupMenu, this._renameField);
-        this._groupContainer.appendChild(
-            this._createDropDownBtn(
-                this._groupContainer,
-                this._groupLabel,
-                this._renameField,
-            ),
-        );
-        this._groupContainer.appendChild(this._groupLabel);
-        this._groupContainer.appendChild(this._groupMenu);
+        this._colorContainer = document.createElement("div");
+        this._colorContainer.className = "color-container";
+        this._colorContainer.style.display = "block";
+        this._colorContainer.name =  this._name;
 
         let groupColorPicker = new ColorPicker();
-        groupColorPicker.setRGBA(0, 0, 0, 1);
-        this._content.insertBefore(groupColorPicker.htmlElement(), this._groupContainer);
-        groupColorPicker._colorpicker.addEventListener("input", () => {
+        groupColorPicker.setRGBA(255, 255, 255, 1);
+        groupColorPicker._colorpicker.addEventListener("input", (e) => {
             this._colorElements.forEach((elem, k, m) => {
                 elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
             });
         });
-        groupColorPicker._alpharange.addEventListener("input", () => {
+        groupColorPicker._alpharange.addEventListener("input", (e) => {
             this._colorElements.forEach((elem, k, m) => {
                 elem.getColorInput()._alpharange.value = groupColorPicker._alpharange.value;
                 elem.getColorInput().updateColorBg();
             });
         })
+
+        this._control = document.createElement("div");
+        this._control.className = "color-control";
+        this._groupLabel = document.createElement("label");
+        this._renameField = this._createRenameField(this._groupLabel);
+        this._confLabel(this._groupLabel, this._colorContainer);
+        
+        this._control.appendChild(this._groupLabel);
+        this._control.appendChild(groupColorPicker.htmlElement());
+        this._control.appendChild(
+            this._createDropDownBtn(
+                this._control,
+                this._groupLabel,
+                this._renameField,
+            ),
+        );
+
+        // in order for drop event to be fired
+        // dragenter and dragover events should be cancelled
+        this._colorContainer.addEventListener("dragenter", (e) => { e.preventDefault() });
+        this._colorContainer.addEventListener("dragover", (e) => { e.preventDefault() });
+        this._colorContainer.addEventListener("drop", (e) => {
+            try {
+                this.addColorElement(_draggedColorVariant);
+            }
+            finally {
+                _draggedColorVariant = null;
+            };
+        });
         
         colorGroupGO.colors.forEach(colorGO => {
             this.addColorElement(
-                new ColorElement(this, colorGO, screenshotViewContainer, descrContainer)
+                new ColorVariant(this, colorGO, screenshotViewContainer, descrContainer)
                 );
             })
         // add color group to global registry
         GlobColorGroups.set(this._name, this);
+
+        this._content.appendChild(this._drag);
+        this._content.appendChild(this._control);
+        this._content.appendChild(this._colorContainer);
     }
 
     delete() {
@@ -614,7 +610,7 @@ export class ColorGroup {
         addColorBtn.addEventListener("click", (evt) => {
             closeDropMenu();
             this.addColorElement(
-                new ColorElement(
+                new ColorVariant(
                     this,
                     {
                         description: "",
@@ -645,18 +641,14 @@ export class ColorGroup {
         return ctxBtn
     }
 
-    _confLabel(label, menu, renameField) {
-        label.className = "color-group-label";
-        label.for = menu.id;
-        label.htmlFor = menu.id;
-        label.textContent = menu.name;
+    _confLabel(label, colorContainer) {
+        label.className = "color-label";
+        label.textContent = colorContainer.name;
 
+        let cc = colorContainer
         // fold/unfold child elements with double click
         label.onclick = function () {
-            for (let color of menu.getElementsByClassName("color-element")) {
-                color.style.display = menu.elemsHidden ? 'block' : 'none';
-            }
-            menu.elemsHidden = !menu.elemsHidden;
+            cc.style.display = cc.style.display == "block" ? "none" : "block";
         }
 
         // rename label with doublelick
@@ -675,7 +667,7 @@ export class ColorGroup {
         }
         elementObj._colorGroup = this;
         this._colorElements.set(elementObj.id, elementObj);
-        this._groupMenu.appendChild(elementObj.getHtmlElement());
+        this._colorContainer.appendChild(elementObj.getHtmlElement());
     }
 
     getColorElements() {
@@ -687,7 +679,7 @@ export class ColorGroup {
             throw new Error(`can't remove color element, element ${elementObj} has no id`)
         }
         this._colorElements.delete(elementObj.id);
-        this._groupMenu.removeChild(elementObj.getHtmlElement());
+        this._colorContainer.removeChild(elementObj.getHtmlElement());
     }
 
     clearColorElements() {
@@ -695,7 +687,7 @@ export class ColorGroup {
             elem.delete();
         }
         this._colorElements.clear();
-        this._groupMenu.replaceChildren();
+        this._colorContainer.replaceChildren();
     }
 
     toJSON() {
