@@ -14,7 +14,6 @@ import {
 import {
     ColorGroup,
     GlobColorGroups,
-    Color,
     onDocsReload,
     onFileReload,
     restoreColors,
@@ -103,13 +102,10 @@ window.loadFile = function () {
                     GlobColorGroups.clear();
                 }
                 onFileReload();
-                let defaultSubGroup = new ColorGroup();
-                defaultSubGroup.setName("default");
-                colorGroupsContainer.appendChild(defaultSubGroup.getHtmlElement());
                 res.colorGroups.forEach(group => {
-                    // TODO read meta and add color to appropriate subgroup
-                    let cg = new Color(group, screenshotViewContainer, descContainer);
-                    defaultSubGroup.addColorGroup(cg);
+                    let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
+                    GlobColorGroups.set(cg.id, cg);
+                    colorGroupsContainer.appendChild(cg.getHtmlElement());
                 });
                 _loadedColorsFile = res.file;
             })
@@ -123,15 +119,15 @@ window.loadFile = function () {
     }
 };
 
-window.addSubGroup = function() {
+window.addColorGroup = function() {
     if (_loadedColorsFile === null) {
         window.alert("no file loaded");
         return
     }
-    let sg = new ColorGroup();
-    sg.setName("New group");
-    colorGroupsContainer.appendChild(sg.getHtmlElement());
-    sg.activateRename();
+    let cg = new ColorGroup({name: "New group", colors: []}, screenshotViewContainer, descContainer);
+    GlobColorGroups.set(cg.id, cg);
+    colorGroupsContainer.appendChild(cg.getHtmlElement());
+    cg.activateRename();
 }
 
 window.saveFileAs = async function () {

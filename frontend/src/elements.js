@@ -139,9 +139,9 @@ class ColorView {
 // Has color input, name. Referes to one Color at a time.
 // Has associated ColorView object that provides visualization for it.
 class ColorVariant {
-    constructor(colorGroup, colorGO, screenshotViewContainer, descrContainer) {
-        this._colorGroup = colorGroup;
-        this._colorView = new ColorView(colorGO.description, colorGO.img);
+    constructor(color, variantGO, screenshotViewContainer, descrContainer) {
+        this._color = color;
+        this._colorView = new ColorView(variantGO.description, variantGO.img);
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
@@ -166,7 +166,7 @@ class ColorVariant {
         this._element.appendChild(this._inner);
         this._colorInput = new ColorPicker();
         this._colorInput.setRGBA(
-            colorGO.rgb[0], colorGO.rgb[1], colorGO.rgb[2], colorGO.alpha,
+            variantGO.rgb[0], variantGO.rgb[1], variantGO.rgb[2], variantGO.alpha,
         )
         this._colorInput.className = "color-picker";
         this._inner.appendChild(this._colorInput.htmlElement());
@@ -175,7 +175,7 @@ class ColorVariant {
         this._inner.append(this._removeBtn);
         this._removeBtn.addEventListener('click', (e) => {
             if (window.confirm("удалить состояние?")) {
-                this._colorGroup.removeColorElement(this);
+                this._color.removeColorElement(this);
                 if (this === _selectedColorElement) {
                     _selectedColorElement = null;
                 }
@@ -248,7 +248,9 @@ class ColorVariant {
 }
 
 export class ColorGroup {
-    constructor(screenshotViewContainer, descrContainer) {
+    constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
+        this.id = crypto.randomUUID();
+        
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
@@ -260,6 +262,7 @@ export class ColorGroup {
         this._content.appendChild(this._inner);
 
         this._label = document.createElement("label");
+        this._label.textContent = colorGroupGO.name;
         this._content.insertBefore(this._label, this._inner);
         this._label.className = "color-group-label";
         this._label.style.cursor = "pointer";
@@ -276,7 +279,7 @@ export class ColorGroup {
         this._content.addEventListener('drop', (e) => {
             if (_draggedColor === null) { return };
             try {
-                this.addColorGroup(_draggedColor);
+                this.addColor(_draggedColor);
             }
             finally {
                 _draggedColor = null;
@@ -291,6 +294,13 @@ export class ColorGroup {
             ),
             this._inner,
         );
+
+        this._colors = new Map();
+        colorGroupGO.colors.forEach(colorGO => {
+            this.addColor(
+                new Color(colorGO, screenshotViewContainer, descrContainer)
+            );
+        })
     }
 
     activateRename() {
@@ -304,9 +314,15 @@ export class ColorGroup {
         this._label.textContent = s;
     }
 
-    // adds colorGroup to subgroup
-    addColorGroup(cg) {
-        this._inner.appendChild(cg.getHtmlElement());
+    // adds color to color group
+    addColor(color) {
+        this._colors.set(color.id, color);
+        this._inner.appendChild(color.getHtmlElement());
+    }
+
+    removeColor(color) {
+        this._colors.remove(color.id);
+        this._inner.removeChild(color.getHtmlElement());
     }
 
     getHtmlElement() {
@@ -396,13 +412,14 @@ export class ColorGroup {
             let cg = new Color(
                 {
                     name: "New color",
+                    displayName: "New color",
                     colorspace: 0,
-                    colors: [],
+                    variants: [],
                 },
                 this._screenshotViewContainer,
                 this._descrContainer,
-            )
-            this._content.appendChild(cg.getHtmlElement());
+            );
+            this.addColor(cg);
             cg.activateRename();
         })
 
@@ -423,10 +440,22 @@ export class ColorGroup {
         return ctxBtn
     }
 
-    delete() {
-        for (let cg of this._inner.getElementsByClassName("color-container")) {
-            cg.delete();
+    toJSON() {
+        let colorsarr = new Array();
+        for (let [_, color] of this._colors) {
+            colorsarr.push(color.toJSON());
         }
+        return {
+            name: this._label.textContent,
+            colors: colorsarr,
+        }
+    }
+
+    delete() {
+        for (let [_, color] of this._colors) {
+            color.delete();
+        }
+        GlobColorGroups.delete(this.id);
         this._content.remove();
     }
 }
@@ -437,13 +466,18 @@ export class ColorGroup {
 // are based on ColorGroup name uniqueness, however the name uniqueness is not
 // guaranteed by the input files design, so it's up to the user to provide correct files.
 export class Color {
-    constructor(colorGroupGO, screenshotViewContainer, descrContainer) {
+    constructor(colorGO, screenshotViewContainer, descrContainer) {
+        this.id = crypto.randomUUID();
+
         this._screenshotViewContainer = screenshotViewContainer;
         this._descrContainer = descrContainer;
 
-        this._name = colorGroupGO.name;
-        // uuid string to ColorElement
-        this._colorElements = new Map();
+        // IMPORTANT: DO NOT ALTER THIS NAME
+        this._name = colorGO.name;
+        this._displayName = colorGO.displayName;
+        this._colorspace = colorGO.colorspace;
+        // uuid string to ColorVariant
+        this._colorVariants = new Map();
 
         this._content = document.createElement("div");
         this._content.className = "color-content";
@@ -459,17 +493,17 @@ export class Color {
         this._colorContainer = document.createElement("div");
         this._colorContainer.className = "color-container";
         this._colorContainer.style.display = "block";
-        this._colorContainer.name =  this._name;
+        this._colorContainer.name = this._name;
 
         let groupColorPicker = new ColorPicker();
         groupColorPicker.setRGBA(255, 255, 255, 1);
         groupColorPicker._colorpicker.addEventListener("input", (e) => {
-            this._colorElements.forEach((elem, k, m) => {
+            this._colorVariants.forEach((elem, k, m) => {
                 elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
             });
         });
         groupColorPicker._alpharange.addEventListener("input", (e) => {
-            this._colorElements.forEach((elem, k, m) => {
+            this._colorVariants.forEach((elem, k, m) => {
                 elem.getColorInput()._alpharange.value = groupColorPicker._alpharange.value;
                 elem.getColorInput().updateColorBg();
             });
@@ -477,16 +511,18 @@ export class Color {
 
         this._control = document.createElement("div");
         this._control.className = "color-control";
-        this._groupLabel = document.createElement("label");
-        this._renameField = this._createRenameField(this._groupLabel);
-        this._confLabel(this._groupLabel, this._colorContainer);
+        this._label = document.createElement("label");
+        this._label.className = "color-label";
+        this._label.textContent = this._displayName == "" ? this._name : this._displayName;
+        this._confLabel(this._label, this._colorContainer);
         
-        this._control.appendChild(this._groupLabel);
+        this._control.appendChild(this._label);
         this._control.appendChild(groupColorPicker.htmlElement());
+        this._renameField = this._createRenameField(this._label);
         this._control.appendChild(
             this._createDropDownBtn(
                 this._control,
-                this._groupLabel,
+                this._label,
                 this._renameField,
             ),
         );
@@ -497,20 +533,18 @@ export class Color {
         this._colorContainer.addEventListener("dragover", (e) => { e.preventDefault() });
         this._colorContainer.addEventListener("drop", (e) => {
             try {
-                this.addColorElement(_draggedColorVariant);
+                this.addColorVariant(_draggedColorVariant);
             }
             finally {
                 _draggedColorVariant = null;
             };
         });
-        
-        colorGroupGO.colors.forEach(colorGO => {
-            this.addColorElement(
-                new ColorVariant(this, colorGO, screenshotViewContainer, descrContainer)
-                );
-            })
-        // add color group to global registry
-        GlobColorGroups.set(this._name, this);
+
+        colorGO.variants.forEach(variantGO => {
+            this.addColorVariant(
+                new ColorVariant(this, variantGO, screenshotViewContainer, descrContainer)
+            );
+        })
 
         this._content.appendChild(this._drag);
         this._content.appendChild(this._control);
@@ -549,8 +583,8 @@ export class Color {
     }
 
     activateRename() {
-        this._renameField.value = this._groupLabel.textContent;
-        this._groupLabel.replaceWith(this._renameField);
+        this._renameField.value = this._label.textContent;
+        this._label.replaceWith(this._renameField);
         this._renameField.focus();
         this._renameField.select();
     }
@@ -609,7 +643,7 @@ export class Color {
 
         addColorBtn.addEventListener("click", (evt) => {
             closeDropMenu();
-            this.addColorElement(
+            this.addColorVariant(
                 new ColorVariant(
                     this,
                     {
@@ -642,9 +676,6 @@ export class Color {
     }
 
     _confLabel(label, colorContainer) {
-        label.className = "color-label";
-        label.textContent = colorContainer.name;
-
         let cc = colorContainer
         // fold/unfold child elements with double click
         label.onclick = function () {
@@ -661,44 +692,45 @@ export class Color {
         return this._content;
     }
 
-    addColorElement(elementObj) {
-        if (elementObj.id === undefined || elementObj.id === null) {
-            throw new Error(`can't add color element, element ${elementObj} has no id`)
+    addColorVariant(colorVariant) {
+        if (colorVariant.id === undefined || colorVariant.id === null) {
+            throw new Error(`can't add color element, element ${colorVariant} has no id`)
         }
-        elementObj._colorGroup = this;
-        this._colorElements.set(elementObj.id, elementObj);
-        this._colorContainer.appendChild(elementObj.getHtmlElement());
+        colorVariant._color = this;
+        this._colorVariants.set(colorVariant.id, colorVariant);
+        this._colorContainer.appendChild(colorVariant.getHtmlElement());
     }
 
     getColorElements() {
-        return Array.from(this._colorElements.values());
+        return Array.from(this._colorVariants.values());
     }
 
     removeColorElement(elementObj) {
         if (elementObj.id === undefined || elementObj.id === null) {
             throw new Error(`can't remove color element, element ${elementObj} has no id`)
         }
-        this._colorElements.delete(elementObj.id);
+        this._colorVariants.delete(elementObj.id);
         this._colorContainer.removeChild(elementObj.getHtmlElement());
     }
 
     clearColorElements() {
-        for (let [_, elem] of this._colorElements) {
+        for (let [_, elem] of this._colorVariants) {
             elem.delete();
         }
-        this._colorElements.clear();
+        this._colorVariants.clear();
         this._colorContainer.replaceChildren();
     }
 
     toJSON() {
-        let elemsarr = new Array();
-        for (let [_, elem] of this._colorElements) {
-            elemsarr.push(elem.toJSON());
+        let variants = new Array();
+        for (let [_, elem] of this._colorVariants) {
+            variants.push(elem.toJSON());
         }
         return {
-            name: this._groupLabel.textContent,
-            colrspace: 0,  // TODO change it
-            colors: elemsarr,
+            name: this._name,
+            displayName: this._label.textContent,
+            colrspace: this._colorspace,
+            variants: variants,
         }
     }
 }

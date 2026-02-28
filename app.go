@@ -67,15 +67,15 @@ func (a *App) OpenImgFileDialog() (string, error) {
 	return file, err
 }
 
-type Color struct {
+type ColorVariant struct {
 	Rgb         [3]uint8 `json:"rgb"`
 	Alpha       float32  `json:"alpha"`
 	Description string   `json:"description"`
 	Img         string   `json:"img"`
 }
 
-func NewColor(rgb [3]uint8, alpha float32, descr string, img string) *Color {
-	return &Color{
+func NewColorVariant(rgb [3]uint8, alpha float32, descr string, img string) *ColorVariant {
+	return &ColorVariant{
 		Rgb:         rgb,
 		Alpha:       alpha,
 		Description: descr,
@@ -83,23 +83,37 @@ func NewColor(rgb [3]uint8, alpha float32, descr string, img string) *Color {
 	}
 }
 
-// colorspace:
-// 0 - rgb
-// 1 - hsv
-type ColorGroup struct {
-	Name       string   `json:"name"`
-	Colorspace int      `json:"colorspace"`
-	Colors     []*Color `json:"colors"`
+// Name - immutable name, red from file
+// DisplayName - mutable user-editable name
+// Colorspase - 0 rgb, 1 hsv
+// Variants - color variants
+type Color struct {
+	Name        string          `json:"name"`
+	DisplayName string          `json:"displayName"`
+	Colorspace  int             `json:"colorspace"`
+	Variants    []*ColorVariant `json:"variants"`
 }
 
 // colorspace:
 // 0 - rgb
 // 1 - hsv
-func NewColorGroup(name string, colorspace int, colors []*Color) *ColorGroup {
-	return &ColorGroup{
+func NewColor(name string, colorspace int, variants []*ColorVariant) *Color {
+	return &Color{
 		Name:       name,
 		Colorspace: colorspace,
-		Colors:     colors,
+		Variants:   variants,
+	}
+}
+
+type ColorGroup struct {
+	Name   string  `json:"name"`
+	Colors []Color `json:"colors"`
+}
+
+func NewColorGroup(name string, colors []Color) *ColorGroup {
+	return &ColorGroup{
+		Name:   name,
+		Colors: colors,
 	}
 }
 
@@ -110,11 +124,11 @@ type ColorsFile struct {
 	Colors  map[string][][4]any `json:"Colors"`
 }
 
-func NewColorsFile(colors []ColorGroup) *ColorsFile {
+func NewColorsFile(colors []Color) *ColorsFile {
 	colorsMap := make(map[string][][4]any, len(colors))
 	for _, colorGroup := range colors {
 		colorsArr := make([][4]any, 0, 10)
-		for _, color := range colorGroup.Colors {
+		for _, color := range colorGroup.Variants {
 			rgba := [4]any{color.Rgb[0], color.Rgb[1], color.Rgb[2], color.Alpha}
 			colorsArr = append(colorsArr, rgba)
 		}
@@ -157,7 +171,7 @@ func parseColorDigit(digit string) (*uint8, *float32, error) {
 }
 
 // expects  "0, 255, 255, 1.0" as runes
-func parseColor(colorRunes []rune) (*Color, error) {
+func parseColor(colorRunes []rune) (*ColorVariant, error) {
 	rgb := [3]uint8{}
 	var alpha float32
 	strDigits := strings.Split(string(colorRunes), ",")
@@ -177,7 +191,7 @@ func parseColor(colorRunes []rune) (*Color, error) {
 		}
 	}
 	// TODO add description instead of empty string
-	return NewColor(rgb, alpha, "", ""), nil
+	return NewColorVariant(rgb, alpha, "", ""), nil
 }
 
 // expects
@@ -188,8 +202,8 @@ func parseColor(colorRunes []rune) (*Color, error) {
 //	[ 0, 255, 255, 1.0 ]
 //
 // as runes
-func readColorsGroup(group []rune, cgName string) (*ColorGroup, error) {
-	colors := make([]*Color, 0, 20)
+func readColor(group []rune, colorName string) (*Color, error) {
+	colorVariants := make([]*ColorVariant, 0, 20)
 	var brackets int16 = 0
 	colorStart := 0
 
@@ -226,17 +240,19 @@ func readColorsGroup(group []rune, cgName string) (*ColorGroup, error) {
 			if err != nil {
 				return nil, err
 			}
-			colors = append(colors, color)
+			colorVariants = append(colorVariants, color)
 		}
 	}
 
 	// TODO hardcoded rgb
-	return NewColorGroup(cgName, 0, colors), nil
-
+	return NewColor(colorName, 0, colorVariants), nil
 }
 
+// photoshop color files has no such thing as groups
+// but to comply with the logic of the app just wrap all colors
+// from the file into 'default' color group
 func parseColorFile(reader io.RuneReader) ([]ColorGroup, error) {
-	groups := make([]ColorGroup, 0, 50)
+	colors := make([]Color, 0, 50)
 	groupRunes := make([]rune, 0, 1000)
 	groupNameRunes := make([]rune, 0, 100)
 	var curlyBrackets int = 0
@@ -311,14 +327,14 @@ parseLoop:
 				}
 			}
 		}
-		colorGroup, err := readColorsGroup(groupRunes, string(groupNameRunes))
+		color, err := readColor(groupRunes, string(groupNameRunes))
 		if err != nil {
 			return nil, err
 		}
-		groups = append(groups, *colorGroup)
+		colors = append(colors, *color)
 	}
 
-	return groups, nil
+	return []ColorGroup{*NewColorGroup("default", colors)}, nil
 }
 
 func createBackupFiles(f *os.File) error {
@@ -442,7 +458,7 @@ func (a *App) LoadColorsFile() (*ColorsFileLoadResult, error) {
 	return &ColorsFileLoadResult{colorGroups, selectedFile}, nil
 }
 
-func writeColorsFile(filename string, colors []ColorGroup) error {
+func writeColorsFile(filename string, colors []Color) error {
 	// open file block
 	f, err := os.Create(fmt.Sprintf("%s.txt", filename))
 	if err != nil {
@@ -469,18 +485,18 @@ func writeColorsFile(filename string, colors []ColorGroup) error {
 	if err != nil {
 		return err
 	}
-	for i, group := range colors {
-		_, err = fmt.Fprintf(w, "%s:\n\t\t[\n\t\t", group.Name)
+	for i, color := range colors {
+		_, err = fmt.Fprintf(w, "%s:\n\t\t[\n\t\t", color.Name)
 		if err != nil {
 			return err
 		}
-		for i, color := range group.Colors {
+		for i, variant := range color.Variants {
 			delim := ","
-			if i == len(group.Colors)-1 {
+			if i == len(color.Variants)-1 {
 				delim = ""
 			}
-			r, g, b := color.Rgb[0], color.Rgb[1], color.Rgb[2]
-			_, err = fmt.Fprintf(w, "[ %d, %d, %d, %.1f ]%s\n\t\t", r, g, b, color.Alpha, delim)
+			r, g, b := variant.Rgb[0], variant.Rgb[1], variant.Rgb[2]
+			_, err = fmt.Fprintf(w, "[ %d, %d, %d, %.1f ]%s\n\t\t", r, g, b, variant.Alpha, delim)
 			if err != nil {
 				return err
 			}
@@ -515,7 +531,7 @@ func writeColorsFile(filename string, colors []ColorGroup) error {
 	return nil
 }
 
-func writeColorsFileJson(filename string, colors []ColorGroup) error {
+func writeColorsFileJson(filename string, colors []Color) error {
 	f, err := os.Create(fmt.Sprintf("%s.json", filename))
 	if err != nil {
 		return err
@@ -579,7 +595,7 @@ func (a *App) StashImgByFilename(img string, filename string) (string, error) {
 	return StashImg(img, imagesDir)
 }
 
-func writeStaticFiles(filename string, colorGroups []ColorGroup) error {
+func writeStaticFiles(filename string, colorGroups []Color) error {
 	// save images
 	colorsDir := imgDirFromFilename(filename)
 	err := os.MkdirAll(colorsDir, os.ModePerm)
@@ -587,7 +603,7 @@ func writeStaticFiles(filename string, colorGroups []ColorGroup) error {
 		return err
 	}
 	for _, group := range colorGroups {
-		for _, color := range group.Colors {
+		for _, color := range group.Variants {
 			if color.Img != "" {
 				StashImg(color.Img, colorsDir)
 			}
@@ -596,18 +612,26 @@ func writeStaticFiles(filename string, colorGroups []ColorGroup) error {
 	return nil
 }
 
-func (a *App) OverwriteColorsFiles(filename string, colors []ColorGroup) error {
+func (a *App) OverwriteColorsFiles(filename string, colorGroups []ColorGroup) error {
 	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
+	colors := []Color{}
+	for _, cg := range colorGroups {
+		colors = append(colors, cg.Colors...)
+	}
 	err := writeColorsFile(filename, colors)
 	if err != nil {
 		return err
 	}
-	err = writeColorsMetaFileJson(filename, colors)
+	err = writeColorsMetaFileJson(filename, colorGroups)
 	return err
 }
 
 // main function to save current state of the colors from the app to disk
-func (a *App) SaveColors(filename string, colors []ColorGroup) error {
+func (a *App) SaveColors(filename string, colorGroups []ColorGroup) error {
+	colors := []Color{}
+	for _, cg := range colorGroups {
+		colors = append(colors, cg.Colors...)
+	}
 	// main photoshop colors file
 	err := writeColorsFile(filename, colors)
 	if err != nil {
@@ -618,7 +642,7 @@ func (a *App) SaveColors(filename string, colors []ColorGroup) error {
 		return err
 	}
 	// meta info: desc, screenshots path, etc.
-	err = writeColorsMetaFileJson(filename, colors)
+	err = writeColorsMetaFileJson(filename, colorGroups)
 	if err != nil {
 		return err
 	}
@@ -635,7 +659,7 @@ type SaveColorsDialogResult struct {
 	Error     error  `json:"error"`
 }
 
-func (a *App) SaveColorsDialog(colors []ColorGroup) SaveColorsDialogResult {
+func (a *App) SaveColorsDialog(colorGroups []ColorGroup) SaveColorsDialogResult {
 	filename, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{})
 	if err != nil {
 		return SaveColorsDialogResult{"", err}
@@ -643,7 +667,7 @@ func (a *App) SaveColorsDialog(colors []ColorGroup) SaveColorsDialogResult {
 	if filename == "" {
 		return SaveColorsDialogResult{"", nil}
 	}
-	err = a.SaveColors(filename, colors)
+	err = a.SaveColors(filename, colorGroups)
 	if err != nil {
 		return SaveColorsDialogResult{"", err}
 	}
