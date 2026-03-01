@@ -160,6 +160,14 @@ export class ColorPicker {
         };
     }
 
+    getColorpickerHtml() {
+        return this._colorpicker;
+    }
+
+    getAlpharangeHtml() {
+        return this._alpharange;
+    }
+
     htmlElement() {
         return this._wrapper;
     }
@@ -181,5 +189,120 @@ export class ColorPicker {
         let g = parseInt(`0x${this._colorpicker.value.substring(3, 5)}`, 16)
         let b = parseInt(`0x${this._colorpicker.value.substring(5, 7)}`, 16)
         return [r, g, b, parseFloat((this._alpharange.value / 255).toFixed(2))]
+    }
+}
+
+export class RenamableLabel {
+    constructor() {
+        this._label = document.createElement("label");
+        this._label.className = "color-label";
+        this._label.addEventListener("dblclick", () => { this.activateRename() });
+        this._renameField = document.createElement("input");
+        this._renameField.type = "text";
+        this._renameField.addEventListener("keydown", (e) => {
+            if (e.key == "Enter") {
+                if (this._renameField.value !== null && this._renameField != "") {
+                    this._label.textContent = this._renameField.value;
+                }
+                this._renameField.replaceWith(this._label);
+            }
+            if (e.key == "Escape") {
+                this._renameField.replaceWith(this._label);
+            }
+        })
+        this._renameField.addEventListener("focusout", () => {
+            this._renameField.replaceWith(this._label);
+            this._renameField.value = "";
+        })
+    }
+
+    get htmlElement() {
+        return this._label;
+    }
+
+    get renameFieldHtml() {
+        return this._renameField;
+    }
+
+    getHtml() {
+        return this._label;
+    }
+
+    setName(name) {
+        this._label.textContent = name;
+    }
+
+    activateRename() {
+        this._renameField.value = this._label.textContent;
+        this._label.replaceWith(this._renameField);
+        this._renameField.focus();
+        this._renameField.select();
+    }
+}
+
+export class ColorDropdownMenu {
+    constructor() {
+        this._btn = document.createElement("button");
+        this._btn.className = "drop-menu-open-btn";
+        this._btn.textContent = "▼";
+
+        this._menu = document.createElement("div");
+        this._menu.className = "drop-menu";
+
+        this._menu.addEventListener("mouseleave", () => { this.close() });
+        this._btn.addEventListener("click", (e) => {
+            this._menu.style.display != "block" ? this.open(e.clientX, e.clientY) : this.close();
+        });
+
+        // rename color button
+        this._renameBtn = document.createElement("button");
+        this._renameBtn.className = "drop-menu-btn";
+        this._renameBtn.textContent = "переименовать";
+        this._menu.appendChild(this._renameBtn);
+        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "drop-menu-divider"}));
+
+        // add color variant button
+        this._addVariantBtn = document.createElement("button");
+        this._addVariantBtn.className = "drop-menu-btn";
+        this._addVariantBtn.textContent = "добавить состояние";
+        this._menu.appendChild(this._addVariantBtn);
+        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "drop-menu-divider"}));
+
+        // delete group button
+        this._delColorBtn = document.createElement("button");
+        this._delColorBtn.className = "drop-menu-btn";
+        this._delColorBtn.textContent = "удалить";
+        this._menu.appendChild(this._delColorBtn);
+        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+    }
+
+    open(x, y) {
+        this._menu.style.left = `${x}px`;
+        this._menu.style.top = `${y}px`;
+        this._menu.style.display = "block";
+    }
+
+    close() {
+        this._menu.style.display = "none";
+    }
+
+    get openBtnHtml() {
+        return this._btn;
+    }
+
+    get menuHtml() {
+        return this._menu;
+    }
+
+    get renameBtnHtml() {
+        return this._renameBtn;
+    }
+
+    get addVariantBtnHtml() {
+        return this._addVariantBtn;
+    }
+
+    get delColorBtnHtml() {
+        return this._delColorBtn;
     }
 }

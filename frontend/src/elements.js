@@ -1,4 +1,8 @@
-import { ColorPicker } from "./utils";
+import {
+    ColorPicker,
+    RenamableLabel,
+    ColorDropdownMenu,
+} from "./utils";
 // A reference to currently selected ColorElement object.
 // Used to determine which ColorElement objects to display (description, image, etc.).
 var _selectedColorElement = null;
@@ -224,11 +228,18 @@ class ColorVariant {
         this._colorView.delete();
     }
 
+    setParentColor(color) {
+        if (!color instanceof Color) {
+            throw new Error("provided object is not of type 'Color' type")
+        }
+        this._color = color;
+    }
+
     getHtmlElement() {
         return this._element;
     }
 
-    getColorInput() {
+    get colorPicker() {
         return this._colorInput;
     }
 
@@ -461,9 +472,9 @@ export class ColorGroup {
 }
 
 // A convenicence object responsible for initalization and providing API for
-// color: a set of several ColorVariants. May have 0 to N ColorVariants.
+// representing color: a set of several ColorVariants. May have 0 to N ColorVariants.
 // Its name is considered to be unique. Many app's critical logic parts
-// are based on ColorGroup name uniqueness, however the name uniqueness is not
+// are based on Color name uniqueness, however the name uniqueness is not
 // guaranteed by the input files design, so it's up to the user to provide correct files.
 export class Color {
     constructor(colorGO, screenshotViewContainer, descrContainer) {
@@ -474,6 +485,7 @@ export class Color {
 
         // IMPORTANT: DO NOT ALTER THIS NAME
         this._name = colorGO.name;
+        // user will edit display name, and this name should be shown to the user
         this._displayName = colorGO.displayName;
         this._colorspace = colorGO.colorspace;
         // uuid string to ColorVariant
@@ -484,9 +496,6 @@ export class Color {
 
         this._drag = document.createElement("div");
         this._drag.className = "color-drag";
-        this._drag.style.minHeight = "15px";
-        this._drag.style.cursor = "grab";
-        this._drag.style.backgroundColor = "#cccccc";
         this._drag.draggable = true;
         this._drag.addEventListener('dragstart', () => { _draggedColor = this });
 
@@ -494,39 +503,6 @@ export class Color {
         this._colorContainer.className = "color-container";
         this._colorContainer.style.display = "block";
         this._colorContainer.name = this._name;
-
-        let groupColorPicker = new ColorPicker();
-        groupColorPicker.setRGBA(255, 255, 255, 1);
-        groupColorPicker._colorpicker.addEventListener("input", (e) => {
-            this._colorVariants.forEach((elem, k, m) => {
-                elem.getColorInput().setRGBA(...groupColorPicker.getRGBA());
-            });
-        });
-        groupColorPicker._alpharange.addEventListener("input", (e) => {
-            this._colorVariants.forEach((elem, k, m) => {
-                elem.getColorInput()._alpharange.value = groupColorPicker._alpharange.value;
-                elem.getColorInput().updateColorBg();
-            });
-        })
-
-        this._control = document.createElement("div");
-        this._control.className = "color-control";
-        this._label = document.createElement("label");
-        this._label.className = "color-label";
-        this._label.textContent = this._displayName == "" ? this._name : this._displayName;
-        this._confLabel(this._label, this._colorContainer);
-        
-        this._control.appendChild(this._label);
-        this._control.appendChild(groupColorPicker.htmlElement());
-        this._renameField = this._createRenameField(this._label);
-        this._control.appendChild(
-            this._createDropDownBtn(
-                this._control,
-                this._label,
-                this._renameField,
-            ),
-        );
-
         // in order for drop event to be fired
         // dragenter and dragover events should be cancelled
         this._colorContainer.addEventListener("dragenter", (e) => { e.preventDefault() });
@@ -540,109 +516,40 @@ export class Color {
             };
         });
 
-        colorGO.variants.forEach(variantGO => {
-            this.addColorVariant(
-                new ColorVariant(this, variantGO, screenshotViewContainer, descrContainer)
-            );
-        })
-
-        this._content.appendChild(this._drag);
-        this._content.appendChild(this._control);
-        this._content.appendChild(this._colorContainer);
-    }
-
-    delete() {
-        this.clearColorElements();
-        this._content.remove();
-        GlobColorGroups.delete(this._name);
-    }
-
-    _createRenameField(groupLabel) {
-        let renameField = document.createElement("input");
-        renameField.type = "text";
-        renameField.addEventListener("keydown", (e) => {
-            if (e.key == "Enter") {
-                if (GlobColorGroups.has(renameField.value)) {
-                    window.alert("Цвет с таким именем уже существует");
-                    return
-                }
-                if (renameField.value !== null && renameField != "") {
-                    groupLabel.textContent = renameField.value;
-                }
-                renameField.replaceWith(groupLabel);
-            }
-            if (e.key == "Escape") {
-                renameField.replaceWith(groupLabel);
-            }
-        })
-        renameField.addEventListener("focusout", (e) => {
-            renameField.replaceWith(groupLabel);
-            renameField.value = "";
-        })
-        return renameField
-    }
-
-    activateRename() {
-        this._renameField.value = this._label.textContent;
-        this._label.replaceWith(this._renameField);
-        this._renameField.focus();
-        this._renameField.select();
-    }
-
-    _createDropDownBtn(groupContainer, groupLabel, renameField) {
-        let ctxBtn = document.createElement("button");
-        ctxBtn.style.position = "relative";
-        ctxBtn.textContent = "▼";
-        ctxBtn._menuOpened = false;
-
-        let dropMenu = document.createElement("div");
-        dropMenu.className = "drop-menu";
-        dropMenu.style.position = "fixed";
-        dropMenu.style.display = "none";
-        dropMenu.style.width = "200px";
-
-        groupContainer.appendChild(dropMenu);
-
-        let openDropMenu = (x, y) => {
-            if (dropMenu.style.display == "none") {
-                dropMenu.style.left = `${x}px`;
-                dropMenu.style.top = `${y}px`;
-                dropMenu.style.display = "block";
-            }
-        }
-        let closeDropMenu = () => {
-            if (dropMenu.style.display != "none") {
-                dropMenu.style.display = "none";
-            }
-        }
-        dropMenu.addEventListener("mouseleave", () => { closeDropMenu() });
-        ctxBtn.addEventListener("click", (e) => {
-            dropMenu.style.display == "none" ? openDropMenu(e.clientX, e.clientY) : closeDropMenu();
+        let groupColorPicker = new ColorPicker();
+        groupColorPicker.setRGBA(255, 255, 255, 1);
+        groupColorPicker.getColorpickerHtml().addEventListener("input", (e) => {
+            this._colorVariants.forEach((elem, k, m) => {
+                elem.colorPicker.setRGBA(...groupColorPicker.getRGBA());
+            });
         });
-
-        // rename btn
-        let renameBtn = document.createElement("button");
-        renameBtn.className = "menu-item";
-        renameBtn.textContent = "переименовать";
-        renameBtn.style.width = "100%";
-        dropMenu.appendChild(renameBtn);
-        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
-
-        renameBtn.addEventListener("click", () => {
-            closeDropMenu();
-            this.activateRename();
+        groupColorPicker.getAlpharangeHtml().addEventListener("input", (e) => {
+            this._colorVariants.forEach((elem, k, m) => {
+                elem.colorPicker.getAlpharangeHtml().value = groupColorPicker._alpharange.value;
+                elem.colorPicker.updateColorBg();
+            });
         })
 
-        // add color button
-        let addColorBtn = document.createElement("button");
-        addColorBtn.className = "menu-item";
-        addColorBtn.textContent = "добавить состояние";
-        addColorBtn.style.width = "100%";
-        dropMenu.appendChild(addColorBtn);
-        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+        this._renameLabel = new RenamableLabel();
+        this._renameLabel.setName(this._displayName == "" ? this._name : this._displayName);
+        this._renameLabel.htmlElement.addEventListener("click", () => {
+            let cc = this._colorContainer;
+            cc.style.display = cc.style.display == "block" ? "none" : "block"; 
+        });
+        // TODO check if label is duplicate name after rename
 
-        addColorBtn.addEventListener("click", (evt) => {
-            closeDropMenu();
+        this._dropMenu = new ColorDropdownMenu();
+        // rename color
+        this._dropMenu.renameBtnHtml.addEventListener("click", () => {
+            this._dropMenu.close();
+            this._renameLabel.activateRename();
+        });
+        this._renameLabel.htmlElement.addEventListener("change", () => {
+            this._displayName = this._renameLabel.htmlElement.textContent;
+        })
+        // add color variant
+        this._dropMenu.addVariantBtnHtml.addEventListener("click", () => {
+            this._dropMenu.close();
             this.addColorVariant(
                 new ColorVariant(
                     this,
@@ -656,36 +563,38 @@ export class Color {
                     this._descrContainer,
                 )
             );
-        })
-
-        // delete group button
-        let delGroupBtn = document.createElement("button");
-        delGroupBtn.className = "menu-item";
-        delGroupBtn.textContent = "удалить";
-        delGroupBtn.style.width = "100%";
-        dropMenu.appendChild(delGroupBtn);
-        dropMenu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
-
-        delGroupBtn.addEventListener("click", () => {
-            closeDropMenu();
-            if (window.confirm("удалить цвет?")) {
+        });
+        // remove color
+        this._dropMenu.delColorBtnHtml.addEventListener("click", () => {
+            this._dropMenu.close();
+            if (window.confirm("Удалить цвет?")) {
                 this.delete();
             }
         });
-        return ctxBtn
+
+        this._control = document.createElement("div");
+        this._control.className = "color-control";
+        this._control.appendChild(this._dropMenu.openBtnHtml);
+        this._control.appendChild(this._dropMenu.menuHtml);
+        this._control.appendChild(this._renameLabel.htmlElement);
+        this._control.appendChild(groupColorPicker.htmlElement());
+
+        this._content.appendChild(this._drag);
+        this._content.appendChild(this._control);
+        this._content.appendChild(this._colorContainer);
+
+        // load color variants
+        colorGO.variants.forEach(variantGO => {
+            this.addColorVariant(
+                new ColorVariant(this, variantGO, screenshotViewContainer, descrContainer)
+            );
+        })
     }
 
-    _confLabel(label, colorContainer) {
-        let cc = colorContainer
-        // fold/unfold child elements with double click
-        label.onclick = function () {
-            cc.style.display = cc.style.display == "block" ? "none" : "block";
-        }
-
-        // rename label with doublelick
-        label.addEventListener('dblclick', () => { this.activateRename() });
-
-        return label
+    delete() {
+        this.clearColorElements();
+        this._content.remove();
+        GlobColorGroups.delete(this._name);
     }
 
     getHtmlElement() {
@@ -693,10 +602,13 @@ export class Color {
     }
 
     addColorVariant(colorVariant) {
-        if (colorVariant.id === undefined || colorVariant.id === null) {
-            throw new Error(`can't add color element, element ${colorVariant} has no id`)
+        if (!colorVariant instanceof ColorVariant) {
+            throw new Error("provided object is not of 'ColorVariant' type");
         }
-        colorVariant._color = this;
+        if (colorVariant.id === undefined || colorVariant.id === null) {
+            throw new Error(`can't add color element, element ${colorVariant} has no id`);
+        }
+        colorVariant.setParentColor(this);
         this._colorVariants.set(colorVariant.id, colorVariant);
         this._colorContainer.appendChild(colorVariant.getHtmlElement());
     }
@@ -705,12 +617,15 @@ export class Color {
         return Array.from(this._colorVariants.values());
     }
 
-    removeColorElement(elementObj) {
-        if (elementObj.id === undefined || elementObj.id === null) {
-            throw new Error(`can't remove color element, element ${elementObj} has no id`)
+    removeColorVariant(variant) {
+        if (!variant instanceof ColorVariant) {
+            throw new Error("provided object is not of 'ColorVariant' type");
         }
-        this._colorVariants.delete(elementObj.id);
-        this._colorContainer.removeChild(elementObj.getHtmlElement());
+        if (variant.id === undefined || variant.id === null) {
+            throw new Error(`can't remove color element, element ${variant} has no id`);
+        }
+        this._colorVariants.delete(variant.id);
+        this._colorContainer.removeChild(variant.getHtmlElement());
     }
 
     clearColorElements() {
@@ -721,6 +636,7 @@ export class Color {
         this._colorContainer.replaceChildren();
     }
 
+    // used to export to GO
     toJSON() {
         let variants = new Array();
         for (let [_, elem] of this._colorVariants) {

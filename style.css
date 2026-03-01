@@ -85,6 +85,26 @@
     cursor: pointer;
 }
 
+.color-drag {
+    min-height: 15px;
+    cursor: grab;
+    background: "#cccccc";
+}
+
+.drop-menu-open-btn {
+    position: relative;
+}
+
+.drop-menu {
+    position: fixed;
+    display: none;
+    width: 200px;
+}
+
+.drop-menu-divider {
+
+}
+
 .color-variant {
     /* border-color: black; */
     border-style: solid;
@@ -156,9 +176,10 @@
     transform: scale(1);
 }
 
-.menu-item {
+.drop-menu-btn {
     display: flex;
     align-items: center;
+    width: 100%;
     padding: 12px 20px;
     cursor: pointer;
     color: #2d3748;
@@ -171,7 +192,7 @@
     font-size: 14px;
 }
 
-.menu-item:hover {
+.drop-menu-btn:hover {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     transform: translateX(5px);
