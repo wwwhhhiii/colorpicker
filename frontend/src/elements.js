@@ -62,7 +62,7 @@ class ColorView {
         return this._colorTextArea;
     }
 
-    // upload image to color view from filesystem
+    // set image to color view from filesystem
     setImgSrcFS(filepath) {
         if (filepath.length == 0) {
             // just empty
@@ -87,6 +87,7 @@ class ColorView {
         this._imgFilepath = null;
     }
 
+    // TODO zooming to mouse pointer is crooked but usable, need fix
     _configureImageContainer(containerElem) {
         let scale = 1;
         let scaleFactor = 1.1;
@@ -157,17 +158,11 @@ class ColorVariant {
         this._element.id = id;
         this._element.className = "color-variant";
         this._drag = document.createElement("div");
-        this._drag.style.minHeight = "15px";
-        this._drag.style.cursor = "grab";
-        this._drag.style.backgroundColor = "#cccccc";
+        this._drag.className = "color-variant-drag";
         this._drag.draggable = true;
         this._element.appendChild(this._drag);
         this._inner = document.createElement("div");
         this._inner.className = "color-variant-inner";
-        this._inner.style.minHeight = "25px";
-        this._inner.style.cursor = "pointer";
-        this._inner.style.zIndex = "0";
-        this._inner.style.position = "relative";
         this._element.appendChild(this._inner);
         this._colorInput = new ColorPicker();
         this._colorInput.setRGBA(
@@ -275,7 +270,7 @@ export class ColorGroup {
         this._renameLabel.setName(colorGroupGO.name);
         this._renameLabel.htmlElement.className = "color-group-label";
         this._renameLabel.htmlElement.addEventListener('click', () => {
-            this._inner.style.display = this._inner.style.display == 'block' ? 'none' : 'block';
+            this._inner.style.display = this._inner.style.display != 'none' ? 'none' : 'block';
         });
         // TODO check group name uniqueness
 
@@ -348,7 +343,6 @@ export class ColorGroup {
         this._renameLabel.setName(s);
     }
 
-    // adds color to color group
     addColor(color) {
         this._colors.set(color.id, color);
         this._inner.appendChild(color.getHtmlElement());

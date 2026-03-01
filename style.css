@@ -141,6 +141,19 @@
     display: inline;
 }
 
+.color-variant-drag {
+    cursor: grab;
+    min-height: 15px;
+    background-color: "#cccccc";
+}
+
+.color-variant-inner {
+    cursor: pointer;
+    min-height: 25px;
+    z-index: 0;
+    position: relative;
+}
+
 .color-wrapper {
     margin: 1%;
 }
