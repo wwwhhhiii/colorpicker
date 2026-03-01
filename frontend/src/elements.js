@@ -453,7 +453,7 @@ export class Color {
             this._dropMenu.close();
             this._renameLabel.activateRename();
         });
-        this._renameLabel.htmlElement.addEventListener("change", () => {
+        this._renameLabel.renameFieldHtml.addEventListener("change", () => {
             this._displayName = this._renameLabel.htmlElement.textContent;
         })
         // add color variant
