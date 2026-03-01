@@ -441,7 +441,7 @@ export class Color {
         this._renameLabel.setName(this._displayName == "" ? this._name : this._displayName);
         this._renameLabel.htmlElement.addEventListener("click", () => {
             let cc = this._colorContainer;
-            cc.style.display = cc.style.display == "block" ? "none" : "block"; 
+            cc.style.display = cc.style.display != "none" ? "none" : "block"; 
         });
         // TODO check if label is duplicate name after rename
 
@@ -487,9 +487,9 @@ export class Color {
 
         this._control = document.createElement("div");
         this._control.className = "color-control";
+        this._control.appendChild(this._renameLabel.htmlElement);
         this._control.appendChild(this._dropMenu.openBtnHtml);
         this._control.appendChild(this._dropMenu.menuHtml);
-        this._control.appendChild(this._renameLabel.htmlElement);
         this._control.appendChild(groupColorPicker.htmlElement());
 
         this._content.appendChild(this._drag);
