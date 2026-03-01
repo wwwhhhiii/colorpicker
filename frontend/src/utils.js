@@ -195,7 +195,6 @@ export class ColorPicker {
 export class RenamableLabel {
     constructor() {
         this._label = document.createElement("label");
-        this._label.className = "color-label";
         this._label.addEventListener("dblclick", () => { this.activateRename() });
         this._renameField = document.createElement("input");
         this._renameField.type = "text";
@@ -240,7 +239,7 @@ export class RenamableLabel {
     }
 }
 
-export class ColorDropdownMenu {
+export class DropdownMenu {
     constructor() {
         this._btn = document.createElement("button");
         this._btn.className = "drop-menu-open-btn";
@@ -253,27 +252,6 @@ export class ColorDropdownMenu {
         this._btn.addEventListener("click", (e) => {
             this._menu.style.display != "block" ? this.open(e.clientX, e.clientY) : this.close();
         });
-
-        // rename color button
-        this._renameBtn = document.createElement("button");
-        this._renameBtn.className = "drop-menu-btn";
-        this._renameBtn.textContent = "переименовать";
-        this._menu.appendChild(this._renameBtn);
-        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "drop-menu-divider"}));
-
-        // add color variant button
-        this._addVariantBtn = document.createElement("button");
-        this._addVariantBtn.className = "drop-menu-btn";
-        this._addVariantBtn.textContent = "добавить состояние";
-        this._menu.appendChild(this._addVariantBtn);
-        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "drop-menu-divider"}));
-
-        // delete group button
-        this._delColorBtn = document.createElement("button");
-        this._delColorBtn.className = "drop-menu-btn";
-        this._delColorBtn.textContent = "удалить";
-        this._menu.appendChild(this._delColorBtn);
-        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
     }
 
     open(x, y) {
@@ -294,15 +272,33 @@ export class ColorDropdownMenu {
         return this._menu;
     }
 
-    get renameBtnHtml() {
-        return this._renameBtn;
-    }
-
     get addVariantBtnHtml() {
         return this._addVariantBtn;
     }
 
     get delColorBtnHtml() {
         return this._delColorBtn;
+    }
+
+    addBtn(btn) {
+        if (!btn instanceof DropMenuBtn) {
+            throw new Error("wrong type passed");
+        }
+        btn._menu = this;
+        this._menu.appendChild(btn.htmlElement);
+        this._menu.appendChild(Object.assign(document.createElement("div"), {className: "menu-divider"}));
+    }
+}
+
+export class DropMenuBtn {
+    constructor(textContent) {
+        this._menu = null;
+        this._btn = document.createElement("button");
+        this._btn.className = "drop-menu-btn";
+        this._btn.textContent = textContent;
+    }
+
+    get htmlElement() {
+        return this._btn;
     }
 }

@@ -127,7 +127,7 @@ window.addColorGroup = function() {
     let cg = new ColorGroup({name: "New group", colors: []}, screenshotViewContainer, descContainer);
     GlobColorGroups.set(cg.id, cg);
     colorGroupsContainer.appendChild(cg.getHtmlElement());
-    cg.activateRename();
+    cg.renameLabel.activateRename();
 }
 
 window.saveFileAs = async function () {
