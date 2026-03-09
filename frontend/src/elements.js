@@ -266,13 +266,22 @@ export class ColorGroup {
         this._inner = document.createElement("div");
         this._inner.className = "color-group-inner";
 
-        this._renameLabel = new RenamableLabel();
+        this._renameLabel = new RenamableLabel((newName) => {
+            if (newName == "default") {
+                window.alert("Недопустимое имя группы");
+                return false
+            }
+            if (GlobColorGroups.has(newName)) {
+                window.alert("Имя группы занято")
+                return false
+            }
+            return true
+        });
         this._renameLabel.setName(colorGroupGO.name);
         this._renameLabel.htmlElement.className = "color-group-label";
         this._renameLabel.htmlElement.addEventListener('click', () => {
-            this._inner.style.display = this._inner.style.display != 'none' ? 'none' : 'block';
+            this.folded ? this.unfold() : this.fold();
         });
-        // TODO check group name uniqueness
 
         this._content.addEventListener('dragenter', (e) => { e.preventDefault() });
         this._content.addEventListener('dragover', (e) => { e.preventDefault() });
@@ -309,6 +318,7 @@ export class ColorGroup {
                 this._screenshotViewContainer,
                 this._descrContainer,
             );
+            this.unfold();
             this.addColor(color);
             color.renameableLabel.activateRename();
         });
@@ -332,29 +342,53 @@ export class ColorGroup {
             this.addColor(
                 new Color(colorGO, screenshotViewContainer, descrContainer)
             );
-        })
+        });
+    }
+
+    get name() {
+        return this._renameLabel.htmlElement.textContent;
     }
 
     get renameLabel() {
         return this._renameLabel;
     }
 
+    get folded() { return this._inner.style.display == 'none' }
+
+    fold() { this._inner.style.display = 'none' }
+    
+    unfold() { this._inner.style.display = 'block' }
+
     setName(s) {
         this._renameLabel.setName(s);
     }
 
     addColor(color) {
-        this._colors.set(color.id, color);
+        if (!color instanceof Color) {
+            throw new Error("wrong type provided");
+        }
+        this._colors.set(color.name, color);
         this._inner.appendChild(color.getHtmlElement());
     }
 
     removeColor(color) {
-        this._colors.remove(color.id);
+        if (!color instanceof Color) {
+            throw new Error("wrong type provided");
+        }
+        this._colors.remove(color.name);
         this._inner.removeChild(color.getHtmlElement());
+    }
+
+    getColor(colorName) {
+        return this._colors.get(colorName);
     }
 
     getHtmlElement() {
         return this._content;
+    }
+
+    getColors() {
+        return Array.from(this._colors.values());
     }
 
     toJSON() {
@@ -363,7 +397,7 @@ export class ColorGroup {
             colorsarr.push(color.toJSON());
         }
         return {
-            name: this._renameLabel.textContent,
+            name: this._renameLabel.htmlElement.textContent,
             colors: colorsarr,
         }
     }
@@ -372,7 +406,7 @@ export class ColorGroup {
         for (let [_, color] of this._colors) {
             color.delete();
         }
-        GlobColorGroups.delete(this.id);
+        GlobColorGroups.delete(this._renameLabel.htmlElement.textContent);
         this._content.remove();
     }
 }
@@ -436,7 +470,7 @@ export class Color {
             });
         })
 
-        this._renameLabel = new RenamableLabel();
+        this._renameLabel = new RenamableLabel((_) => { return true });
         this._renameLabel.htmlElement.className = "color-label";
         this._renameLabel.setName(this._displayName == "" ? this._name : this._displayName);
         this._renameLabel.htmlElement.addEventListener("click", () => {
@@ -504,6 +538,10 @@ export class Color {
         })
     }
 
+    get name() {
+        return this._name;
+    }
+
     get renameableLabel() {
         return this._renameLabel;
     }
@@ -511,7 +549,6 @@ export class Color {
     delete() {
         this.clearColorElements();
         this._content.remove();
-        GlobColorGroups.delete(this._name);
     }
 
     getHtmlElement() {
@@ -530,7 +567,7 @@ export class Color {
         this._colorContainer.appendChild(colorVariant.getHtmlElement());
     }
 
-    getColorElements() {
+    getVariants() {
         return Array.from(this._colorVariants.values());
     }
 
@@ -580,18 +617,24 @@ export function onFileReload() {
 // color groups may be renamed, but their names at file load time
 // remain unchanged (colorGroup._name), so global colors group map
 // can be used to refer to them the same as they were not renamed
-export function restoreColors(origColorGroups) {
-    origColorGroups.forEach(origGroup => {
-        let cg = GlobColorGroups.get(origGroup.name);
-        if (cg === null) { return };
-        for (let i = 0; i <= cg.getColorElements().length - 1; i++) {
-            let origColor = origGroup.colors[i];
-            cg.getColorElements()[i].getColorInput().setRGBA(
-                origColor.rgb[0],
-                origColor.rgb[1],
-                origColor.rgb[2],
-                origColor.alpha,
-            )
+export function restoreColors(origColorGroupsGO) {
+    for (let ogGroup of origColorGroupsGO) {
+        for (let ogColor of ogGroup.colors) {
+            let group = GlobColorGroups.get(ogGroup.name);
+            if (group === undefined) { continue };
+            let color = group.getColor(ogColor.name);
+            if (color === undefined) { continue };
+            let variants = color.getVariants();
+            for (let i = 0; i < ogColor.variants.length; i++) {
+                if (i < variants.length) {
+                    variants[i].colorPicker.setRGBA(
+                        ogColor.variants[i].rgb[0],
+                        ogColor.variants[i].rgb[1],
+                        ogColor.variants[i].rgb[2],
+                        ogColor.variants[i].alpha,
+                    )
+                }
+            }
         }
-    })
+    }
 }
