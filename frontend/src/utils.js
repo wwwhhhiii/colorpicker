@@ -194,8 +194,10 @@ export class ColorPicker {
 
 export class RenamableLabel {
     constructor(onRename) {
-        if (!onRename instanceof Function) {
-            throw new Error("provide rename callback")
+        if (onRename !== null) {
+            if (!onRename instanceof Function) {
+                throw new Error("wrong type");
+            }
         }
         this._label = document.createElement("label");
         this._label.addEventListener("dblclick", () => { this.activateRename() });
@@ -207,16 +209,14 @@ export class RenamableLabel {
                     if (onRename(this._renameField.value) != false) {
                         this._label.textContent = this._renameField.value;
                         this._renameField.replaceWith(this._label);
+                        return
                     }
+                    this._renameField.replaceWith(this._label);
                 }
             }
             if (e.key == "Escape") {
                 this._renameField.replaceWith(this._label);
             }
-        });
-        this._renameField.addEventListener("focusout", () => {
-            this._renameField.replaceWith(this._label);
-            this._renameField.value = "";
         });
     }
 
@@ -233,12 +233,10 @@ export class RenamableLabel {
     }
 
     setName(name) {
-        this._prevLabelContent = this._label.textContent;
         this._label.textContent = name;
     }
 
     activateRename() {
-        this._prevLabelContent = this._label.textContent;
         this._renameField.value = this._label.textContent;
         this._label.replaceWith(this._renameField);
         this._renameField.focus();

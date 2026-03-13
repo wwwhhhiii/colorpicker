@@ -480,7 +480,17 @@ export class Color {
         // TODO check if label is duplicate name after rename
 
         this._dropMenu = new DropdownMenu();
-        // rename color
+        // change original color name
+        let renameColorLabel = new RenamableLabel((name) => {
+            if (window.confirm("Будет изменено оригинальное имя цвета, продолжить?")) {
+                this._name = name;
+                return true;
+            }
+            return false;
+        });
+        renameColorLabel.setName(this._name);
+        this._dropMenu.menuHtml.appendChild(renameColorLabel.htmlElement);
+        // rename color display name
         let renameBtn = new DropMenuBtn("переименовать");
         this._dropMenu.addBtn(renameBtn);
         renameBtn.htmlElement.addEventListener("click", () => {

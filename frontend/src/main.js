@@ -104,7 +104,7 @@ window.loadFile = function () {
                 onFileReload();
                 res.colorGroups.forEach(group => {
                     let cg = new ColorGroup(group, screenshotViewContainer, descContainer);
-                    GlobColorGroups.set(cg.id, cg);
+                    GlobColorGroups.set(cg._renameLabel.htmlElement.textContent, cg);
                     colorGroupsContainer.appendChild(cg.getHtmlElement());
                 });
                 _loadedColorsFile = res.file;
@@ -125,7 +125,7 @@ window.addColorGroup = function() {
         return
     }
     let cg = new ColorGroup({name: "New group", colors: []}, screenshotViewContainer, descContainer);
-    GlobColorGroups.set(cg.id, cg);
+    GlobColorGroups.set(cg.name, cg);
     colorGroupsContainer.appendChild(cg.getHtmlElement());
     cg.renameLabel.activateRename();
 }
