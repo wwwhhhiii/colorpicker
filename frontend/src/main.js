@@ -184,6 +184,7 @@ window.restoreOrigColors = function() {
         console.log("restoring...")
         restoreColors(origColorGroups);
         console.log("restored")
+        window.alert(`Цвета восстановлены из оригинального файла ${_loadedColorsFile}.orig`)
     })
     .catch((err) => {
         console.error(err);
