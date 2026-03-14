@@ -99,9 +99,10 @@ type Color struct {
 // 1 - hsv
 func NewColor(name string, colorspace int, variants []*ColorVariant) *Color {
 	return &Color{
-		Name:       name,
-		Colorspace: colorspace,
-		Variants:   variants,
+		Name:        name,
+		DisplayName: name,
+		Colorspace:  colorspace,
+		Variants:    variants,
 	}
 }
 
