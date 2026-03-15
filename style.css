@@ -44,10 +44,6 @@
     height: 100%;
 }
 
-#__groups-container__ .colors-groups-menu {
-    margin: 2% 0%;
-}
-
 #__groups-content__ {
     background-color: orchid;
     overflow-y: scroll;
@@ -62,8 +58,13 @@
     margin: 2%;
 }
 
-.color-group-inner {
+.color-group-menu {
+    background-color: #427ef5;
+    display: flex;
+}
 
+.color-group-inner {
+    display: none;
 }
 
 .color-group-label {

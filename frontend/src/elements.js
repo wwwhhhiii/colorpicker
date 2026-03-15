@@ -263,8 +263,17 @@ export class ColorGroup {
 
         this._content = document.createElement("div");
         this._content.className = "color-group";
+        this._menu = document.createElement("div");
+        this._menu.className = "color-group-menu";
         this._inner = document.createElement("div");
         this._inner.className = "color-group-inner";
+        this._inner.style.display = "none";
+
+        this._collapseBtn = document.createElement("button");
+        this._collapseBtn.textContent = "▶";
+        this._collapseBtn.addEventListener('click', () => {
+            this.folded ? this.unfold() : this.fold();
+        });
 
         this._renameLabel = new RenamableLabel((newName) => {
             if (newName == "default") {
@@ -279,9 +288,6 @@ export class ColorGroup {
         });
         this._renameLabel.setName(colorGroupGO.name);
         this._renameLabel.htmlElement.className = "color-group-label";
-        this._renameLabel.htmlElement.addEventListener('click', () => {
-            this.folded ? this.unfold() : this.fold();
-        });
 
         this._content.addEventListener('dragenter', (e) => { e.preventDefault() });
         this._content.addEventListener('dragover', (e) => { e.preventDefault() });
@@ -332,9 +338,11 @@ export class ColorGroup {
             }
         });
 
-        this._content.appendChild(this._renameLabel.htmlElement);
-        this._content.appendChild(this._dropMenu.openBtnHtml);
+        this._menu.appendChild(this._collapseBtn);
+        this._menu.appendChild(this._renameLabel.htmlElement);
+        this._menu.appendChild(this._dropMenu.openBtnHtml);
         this._content.appendChild(this._dropMenu.menuHtml);
+        this._content.appendChild(this._menu);
         this._content.appendChild(this._inner);
 
         this._colors = new Map();
@@ -353,11 +361,17 @@ export class ColorGroup {
         return this._renameLabel;
     }
 
-    get folded() { return this._inner.style.display == 'none' }
+    get folded() { return this._inner.style.display === "none" }
 
-    fold() { this._inner.style.display = 'none' }
+    fold() {
+        this._inner.style.display = 'none';
+        this._collapseBtn.textContent = "▶";
+    }
     
-    unfold() { this._inner.style.display = 'block' }
+    unfold() {
+        this._inner.style.display = 'block';
+        this._collapseBtn.textContent = "▼";
+    }
 
     setName(s) {
         this._renameLabel.setName(s);

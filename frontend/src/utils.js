@@ -248,7 +248,7 @@ export class DropdownMenu {
     constructor() {
         this._btn = document.createElement("button");
         this._btn.className = "drop-menu-open-btn";
-        this._btn.textContent = "▼";
+        this._btn.textContent = "▶";
 
         this._menu = document.createElement("div");
         this._menu.className = "drop-menu";
@@ -263,10 +263,12 @@ export class DropdownMenu {
         this._menu.style.left = `${x}px`;
         this._menu.style.top = `${y}px`;
         this._menu.style.display = "block";
+        this._btn.textContent = "▼";
     }
 
     close() {
         this._menu.style.display = "none";
+        this._btn.textContent = "▶";
     }
 
     get openBtnHtml() {
